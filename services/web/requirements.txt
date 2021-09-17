@@ -1,0 +1,5 @@
+Flask==2.0.*
+networkx==2.5.*
+python-Levenshtein==0.12.*
+fuzzywuzzy==0.18.*
+flask-cors==3.0.*
