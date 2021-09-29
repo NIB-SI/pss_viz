@@ -48,30 +48,10 @@ def extract_shortest_paths(g, query_nodes, ignoreDirection=True):
         return g.subgraph(paths_nodes).copy()
 
 
-# def graph2json(g):
-#     nlist = []
-#     for node in g.nodes:
-#         nlist.append({'id': g.nodes[node]['id'],
-#                       'label': node})
-#                       # title is displayed on hover in vis.js
-#                       # 'title': 'Name: {}\nSource: {}\nLink: {}'.format(node, 'NIB', 'http://mylink.com')})
-#     elist = []
-#     for edge in g.edges:
-#         fr = edge[0]
-#         to = edge[1]
-#         elist.append({'from': g.nodes[fr]['id'],
-#                       'to': g.nodes[to]['id'],
-#                       # 'label': g.edges[edge]['type'],
-#                       'type': g.edges[edge]['type']})
-#     return {'nodes': nlist, 'edges': elist}
-
-
 # def visualize_graphviz(g, path, output='pdf'):
 #     dotfile = path + '.dot'
 #     nx.drawing.nx_pydot.write_dot(g, dotfile)
 #     subprocess.call(['dot', '-T{}'.format(output), dotfile, '-o', '{}.{}'.format(path, output)])  # , cwd=outdir)
-
-
 
 def parseJSON(path):
     nodes = []
