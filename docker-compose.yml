@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   web:
-    container_name: pisviz_dev
+    container_name: pss_viz_dev
     build:
         context: ./services/web
         dockerfile: Dockerfile
