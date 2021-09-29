@@ -1,40 +1,14 @@
 import csv
 import subprocess
-import networkx as nx
 import itertools
-
-from fuzzywuzzy import fuzz, process
-
-
-def parse_ckn_csv(fname):
-    g = nx.DiGraph()
-    fields = ['from', 'to', 'type']
-    with open(fname, newline='') as csvfile:
-        dialect = csv.Sniffer().sniff(csvfile.read(2048))
-        csvfile.seek(0)
-        reader = csv.DictReader(csvfile, fieldnames=fields, dialect=dialect, restkey='rest', )
-        for row in reader:
-            g.add_edge(row['from'], row['to'], type=row['type'])
-            if row['type'] == 'binding':
-                g.add_edge(row['to'], row['from'], type=row['type'])
-    return g
+import json
+import re
+import networkx as nx
+# from fuzzywuzzy import fuzz, process
 
 
-def best_matching_nodes(g, node, k=5):
-    return [n for n, s in process.extract(node, list(g.nodes), limit=k, scorer=fuzz.QRatio)]
-
-
-def extract_subgraph(g, nodes, k=2, ignoreDirection=False, fuzzySearch=True):
-    if fuzzySearch:
-        matched_nodes = [node for node in nodes if node in g.nodes]
-        unmatched_nodes = [node for node in nodes if node not in g.nodes]
-        all_nodes = list(g.nodes)
-        for node in unmatched_nodes:
-            best_match, score = process.extract(node, all_nodes, limit=1, scorer=fuzz.QRatio)[0]
-            matched_nodes.append(best_match)
-        nodes = matched_nodes
-    else:
-        nodes = [node for node in nodes if node in g.nodes]
+def extract_subgraph(g, nodes, k=2, ignoreDirection=False):
+    nodes = [node for node in nodes if node in g.nodes]
 
     if ignoreDirection:
         g = nx.Graph(g.copy())
@@ -46,32 +20,160 @@ def extract_subgraph(g, nodes, k=2, ignoreDirection=False, fuzzySearch=True):
             break
         all_neighbours.update(neighbours)
         fromnodes = neighbours
-
     result = g.subgraph(all_neighbours).copy()
-    for i, node in enumerate(result.nodes):
-        result.nodes[node]['id'] = i+1
     return result
 
 
-def graph2json(g):
+def extract_shortest_paths(g, query_nodes, ignoreDirection=True):
+    if ignoreDirection:
+        g = nx.Graph(g)
+
+    # print('--->', query_nodes)
+    if len(query_nodes) == 1:
+        subgraph = extract_subgraph(g, query_nodes, k=2, ignoreDirection=True)
+        return subgraph
+    else:
+        paths_nodes = []
+        for fr, to in itertools.combinations(query_nodes, 2):
+            try:
+                paths = [p for p in nx.all_shortest_paths(g, source=fr, target=to)]
+                # print(paths)
+                paths_nodes.extend([item for path in paths for item in path])
+            except nx.NetworkXNoPath:
+                print('No paths:', fr, to)
+                pass
+        # add back also nodes with no paths
+        # this also cover the case with no paths at all
+        paths_nodes = set(paths_nodes).union(query_nodes)
+        return g.subgraph(paths_nodes).copy()
+
+
+# def graph2json(g):
+#     nlist = []
+#     for node in g.nodes:
+#         nlist.append({'id': g.nodes[node]['id'],
+#                       'label': node})
+#                       # title is displayed on hover in vis.js
+#                       # 'title': 'Name: {}\nSource: {}\nLink: {}'.format(node, 'NIB', 'http://mylink.com')})
+#     elist = []
+#     for edge in g.edges:
+#         fr = edge[0]
+#         to = edge[1]
+#         elist.append({'from': g.nodes[fr]['id'],
+#                       'to': g.nodes[to]['id'],
+#                       # 'label': g.edges[edge]['type'],
+#                       'type': g.edges[edge]['type']})
+#     return {'nodes': nlist, 'edges': elist}
+
+
+# def visualize_graphviz(g, path, output='pdf'):
+#     dotfile = path + '.dot'
+#     nx.drawing.nx_pydot.write_dot(g, dotfile)
+#     subprocess.call(['dot', '-T{}'.format(output), dotfile, '-o', '{}.{}'.format(path, output)])  # , cwd=outdir)
+
+
+
+def parseJSON(path):
+    nodes = []
+    edges = []
+    with open(path) as fp:
+        for line in fp:
+            line = json.loads(line)
+            if line['type'] == 'node':
+                nodes.append(line)
+            elif line['type'] == 'relationship':
+                edges.append(line)
+            else:
+                raise ValueError('Unknown line')
+            # print(line)
+
+    g = nx.DiGraph()
+    for node in nodes:
+        #g.add_node(node['id'], name=node['properties']['name'], labels=node['labels'])
+        g.add_node(node['id'], labels=node['labels'], **node['properties'])
+    for edge in edges:
+        # if edge['start']['id'] not in g.nodes:
+        #     print('UNKNOWN START NODE: ', edge['start']['id'])
+        # if edge['end']['id'] not in g.nodes:
+        #     print('UNKNOWN END NODE: ', edge['end']['id'])
+        props = edge['properties'] if 'properties' in edge else {}
+        g.add_edge(edge['start']['id'], edge['end']['id'], label=edge['label'], **props)
+
+    return nodes, edges, g
+
+
+def graph2json(nodelist, edgelist, g):
+    groups = set()
+    for node in nodelist:
+        groups.add(node['labels'][0])
+    groups_json = {}
+    for elt in groups:
+        if elt == 'Complex':
+            groups_json[elt] = {'shape': 'box',
+                                'color': {'background': 'AliceBlue'}}
+        elif elt == 'Family':
+            groups_json[elt] = {'shape': 'box',
+                                'color': {'background': 'Cornsilk'}}
+        elif elt == 'Foreign':
+            groups_json[elt] = {'shape': 'box',
+                                'color': {'background': 'Gainsboro'}}
+        elif elt == 'FunctionalCluster':
+            groups_json[elt] = {'shape': 'box',
+                                'color': {'background': 'Gainsboro'}}
+        elif elt == 'Metabolite':
+            groups_json[elt] = {'shape': 'box',
+                                'color': {'background': 'LavenderBlush'}}
+        elif elt == 'Process':
+            groups_json[elt] = {'shape': 'box',
+                                'color': {'background': 'PapayaWhip'}}
+        elif elt == 'Reaction':
+            groups_json[elt] = {'shape': 'box',
+                                'color': {'background': 'PaleGoldenRod'}}
+        else:
+            groups_json[elt] = {'shape': 'box',
+                                'color': {'background': 'White'}}
+
     nlist = []
-    for node in g.nodes:
-        nlist.append({'id': g.nodes[node]['id'],
-                      'label': node})
+    for nodeid, attrs in g.nodes(data=True):
+        label = attrs['name']
+        label_parts = [x for x in re.split('(\[.+\])', label) if x.strip()]
+        if len(label_parts) == 1:
+            label = label_parts[0]
+        elif len(label_parts) == 2:
+            # label = '<b>{}</b>\n{}'.format(label_parts[0], label_parts[1].replace(',', ', '))
+            label = label_parts[0]
+        else:
+            print('Warning: strangely formatted label: ', label)
+        nlist.append({'id': nodeid,
+                      'label': label,
+                      'group': attrs['labels'][0],
+                      'description': attrs.get('description', ''),
+                      'synonyms': ', '.join(attrs.get('synonyms', [])),
+                      'additional_information': attrs.get('additional_information', '')
+                      })
                       # title is displayed on hover in vis.js
                       # 'title': 'Name: {}\nSource: {}\nLink: {}'.format(node, 'NIB', 'http://mylink.com')})
     elist = []
-    for edge in g.edges:
-        fr = edge[0]
-        to = edge[1]
-        elist.append({'from': g.nodes[fr]['id'],
-                      'to': g.nodes[to]['id'],
-                      # 'label': g.edges[edge]['type'],
-                      'type': g.edges[edge]['type']})
-    return {'nodes': nlist, 'edges': elist}
+    for fr, to, attrs in g.edges(data=True):
+        elist.append({'from': fr,
+                      'to': to,
+                      'label': attrs['label'].replace('_', ' ')}) #,
+                      # 'type': g.edges[edge]['type']})
+    return {'network': {'nodes': nlist, 'edges': elist}, 'groups': groups_json}
 
 
-def visualize_graphviz(g, path, output='pdf'):
-    dotfile = path + '.dot'
-    nx.drawing.nx_pydot.write_dot(g, dotfile)
-    subprocess.call(['dot', '-T{}'.format(output), dotfile, '-o', '{}.{}'.format(path, output)])  # , cwd=outdir)
+def get_autocomplete_node_data(g):
+    data = []
+    for nodeid, attrs in g.nodes(data=True):
+        elt = {'id': nodeid}
+        for atr in ['name', 'synonyms', 'description', 'additional_information']:
+            elt[atr] = attrs.get(atr, '')
+        elt['synonyms'] = ', '.join(elt['synonyms'])
+        data.append(elt)
+    return {'node_data': data}
+
+
+if __name__ == '__main__':
+    ns, es, g = parseJSON('data/PSS-latest.json')
+    j = graph2json(ns, es, g)
+    nd = get_autocomplete_node_data(g)

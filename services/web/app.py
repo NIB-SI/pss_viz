@@ -1,15 +1,25 @@
 import os
 import json
+import itertools
 import networkx as nx
 
 from flask import Flask, flash, g, redirect, render_template, request, session
 from flask_cors import CORS, cross_origin
 
-from . import utils
+try:
+    from . import utils
+except ImportError:
+    import utils
 
 BASEDIR = os.path.dirname(__file__)
-with open(os.path.join(BASEDIR, 'data/pis.json')) as fp:
-    pis_json = json.load(fp)
+# with open(os.path.join(BASEDIR, 'data/pss_visjs.json')) as fp:
+#     pss_visjs = json.load(fp)
+# with open(os.path.join(BASEDIR, 'data/pss_g6.json')) as fp:
+#     pss_g6 = json.load(fp)
+
+_n, _e, _graph = utils.parseJSON(os.path.join(BASEDIR, 'data/PSS-latest.json'))
+full_json = utils.graph2json(_n, _e, _graph)
+node_search_data = utils.get_autocomplete_node_data(_graph)
 
 
 def create_app(test_config=None):
@@ -20,13 +30,40 @@ def create_app(test_config=None):
         SECRET_KEY='dev',
     )
 
+    @app.route('/get_node_data', methods=['GET', 'POST'])
+    def node_data():
+        return node_search_data
+
     @app.route('/get_network', methods=['GET', 'POST'])
     def draw_network():
-        return pis_json
+        return full_json
+
+    # @app.route('/get_network_g6', methods=['GET', 'POST'])
+    # def draw_network_g6():
+    #     return {} #pss_g6
+
+    @app.route('/search', methods=['GET', 'POST'])
+    def search():
+        try:
+            data = request.get_json(force=False)
+            query_nodes = set(data.get('nodes'))
+        except Exception as e:
+            return {'error': 'Invalid query data'}
+
+        subgraph = utils.extract_shortest_paths(_graph, query_nodes, ignoreDirection=True)
+        return utils.graph2json(_n, _e, subgraph)
 
     @app.route('/')
     @cross_origin()
     def main():
         return render_template('index.html')
 
+    # @app.route('/full')
+    # @cross_origin()
+    # def draw_full():
+    #     return full_json
+    #
+
     return app
+
+app = create_app()
