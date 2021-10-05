@@ -26,17 +26,19 @@ def extract_subgraph(g, nodes, k=2, ignoreDirection=False):
 
 def extract_shortest_paths(g, query_nodes, ignoreDirection=True):
     if ignoreDirection:
-        g = nx.Graph(g)
+        searchable_g = nx.Graph(g)
+    else:
+        searchable_g = g
 
     # print('--->', query_nodes)
     if len(query_nodes) == 1:
-        subgraph = extract_subgraph(g, query_nodes, k=2, ignoreDirection=True)
-        return subgraph
+        subgraph = extract_subgraph(g, query_nodes, k=2, ignoreDirection=ignoreDirection)
+        paths_nodes = subgraph.nodes()
     else:
         paths_nodes = []
         for fr, to in itertools.combinations(query_nodes, 2):
             try:
-                paths = [p for p in nx.all_shortest_paths(g, source=fr, target=to)]
+                paths = [p for p in nx.all_shortest_paths(searchable_g, source=fr, target=to)]
                 # print(paths)
                 paths_nodes.extend([item for path in paths for item in path])
             except nx.NetworkXNoPath:
@@ -45,7 +47,8 @@ def extract_shortest_paths(g, query_nodes, ignoreDirection=True):
         # add back also nodes with no paths
         # this also cover the case with no paths at all
         paths_nodes = set(paths_nodes).union(query_nodes)
-        return g.subgraph(paths_nodes).copy()
+
+    return g.subgraph(paths_nodes).copy()
 
 
 # def visualize_graphviz(g, path, output='pdf'):
