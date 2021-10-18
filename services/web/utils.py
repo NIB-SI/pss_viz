@@ -3,8 +3,48 @@ import subprocess
 import itertools
 import json
 import re
+from html.entities import name2codepoint as n2cp
+
 import networkx as nx
 # from fuzzywuzzy import fuzz, process
+
+RE_HTML_ENTITY = re.compile(r'&(#?)([xX]?)(\w{1,8});', re.UNICODE)
+
+
+# taken from gensim.utils
+def decode_htmlentities(text):
+    def safe_unichr(intval):
+        try:
+            return chr(intval)
+        except ValueError:
+            # ValueError: chr() arg not in range(0x10000) (narrow Python build)
+            s = "\\U%08x" % intval
+            # return UTF16 surrogate pair
+            return s.decode('unicode-escape')
+
+    def substitute_entity(match):
+        try:
+            ent = match.group(3)
+            if match.group(1) == "#":
+                # decoding by number
+                if match.group(2) == '':
+                    # number is in decimal
+                    return safe_unichr(int(ent))
+                elif match.group(2) in ['x', 'X']:
+                    # number is in hex
+                    return safe_unichr(int(ent, 16))
+            else:
+                # they were using a name
+                cp = n2cp.get(ent)
+                if cp:
+                    return safe_unichr(cp)
+                else:
+                    return match.group()
+        except Exception:
+            # in case of errors, return original input
+            return match.group()
+    return RE_HTML_ENTITY.sub(substitute_entity, text)
+
 
 
 def extract_subgraph(g, nodes, k=2, ignoreDirection=False):
@@ -72,7 +112,10 @@ def parseJSON(path):
 
     g = nx.DiGraph()
     for node in nodes:
-        #g.add_node(node['id'], name=node['properties']['name'], labels=node['labels'])
+        # g.add_node(node['id'], name=node['properties']['name'], labels=node['labels'])
+        node['properties']['name'] = decode_htmlentities(node['properties']['name'])
+        node['properties']['description'] = decode_htmlentities(node['properties'].get('description', ''))
+        node['properties']['additional_information'] = decode_htmlentities(node['properties'].get('additional_information', ''))
         g.add_node(node['id'], labels=node['labels'], **node['properties'])
     for edge in edges:
         # if edge['start']['id'] not in g.nodes:
