@@ -17,7 +17,8 @@ BASEDIR = os.path.dirname(__file__)
 # with open(os.path.join(BASEDIR, 'data/pss_g6.json')) as fp:
 #     pss_g6 = json.load(fp)
 
-_n, _e, _graph = utils.parseJSON(os.path.join(BASEDIR, 'data/PSS-latest.json'))
+#_n, _e, _graph = utils.parseJSON(os.path.join(BASEDIR, 'data/PSS-latest.json'))
+_n, _e, _graph = utils.parseJSON(os.path.join(BASEDIR, 'data/PSS-reactions.json'))
 full_json = utils.graph2json(_n, _e, _graph)
 node_search_data = utils.get_autocomplete_node_data(_graph)
 
