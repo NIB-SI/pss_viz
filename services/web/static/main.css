@@ -49,9 +49,10 @@
     display: block;
 }
 
-div.node_id {
+/* div.node_id {
     display: inline-block;
-}
+    font-size: 0px;
+} */
 
 .vis-tooltip {
     background-color: #FFFFFF !important;

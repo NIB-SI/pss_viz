@@ -3,6 +3,7 @@ var node_search_data = null;
 var node_search_data_dict = null;
 var select = null;
 
+format.extend (String.prototype, {});
 
 $( document ).ready(function() {
     $.ajax({
@@ -28,32 +29,22 @@ $( document ).ready(function() {
         // console.log(selected_values);
         selected_values.forEach(function (item, index) {
             let node = node_search_data_dict[item];
-            let description = node.description.length>0 ? node.description : "/";
-            let add_info = node.additional_information.length>0 ? node.additional_information : "/";
-            let synonyms = node.synonyms.length>0 ? node.synonyms : "/";
+            let description = node.description.length>0 ? '<small><strong>description: </strong>{}</small>'.format(node.description) : "";
+            let synonyms = node.synonyms.length>0 ? '<small><strong>synonyms: </strong>{}</small>'.format(node.synonyms) : "";
+            let add_info = node.additional_information.length>0 ? '<small><strong>add. info: </strong>{}</small>'.format(node.additional_information) : "";
+            let node_id = '<small style="font-size:0px;"><strong>id: </strong><div class="node_id">{}</div></small>'.format(node.id);
 
-            let list_item = v.vprintf(
-                '<a href="#" class="list-group-item list-group-item-action">\
+            let list_item = '<a href="#" class="list-group-item list-group-item-action">\
                 <div class="d-flex w-100 justify-content-between">\
-                <h5 class="mb-1">%s</h5>\
+                <h5 class="mb-1">{}</h5>\
                 <button type="button" class="btn btn-link btn-sm float-end"><i class="bi-x-circle" style="color: red;"></i></button>\
                 </div>\
-                <small><strong>description: </strong>%s</small>\
-                <small><strong>synonyms: </strong>%s</small>\
-                <small><strong>add. info: </strong>%s</small>\
-                <small><strong>id: </strong><div class="node_id">%s</div></small>\
-                </a>',
-            // [v.truncate(node.name, maxlen),
-            //  v.truncate(description,  maxlen - 'description:'.length),
-            //  v.truncate(synonyms, maxlen - 'synonyms:'.length),
-            //  v.truncate(add_info, maxlen - 'add. info:'.length)
-            // ]);
-            [node.name,
-             description,
-             synonyms,
-             add_info,
-             node.id
-            ]);
+                {}\
+                {}\
+                {}\
+                {}\
+                </a>'.format(node.name, description, synonyms, add_info, node_id);
+
          $('#queryList').append(list_item);
          // scroll to bottom
          let element = $('#queryList')[0];
@@ -73,6 +64,7 @@ $( document ).ready(function() {
         closeAfterSelect: true,
         valueField: "id",
         labelField: "name",
+        sortField: "name",
         searchField: ['name', 'synonyms', 'description', 'additional_information'],
         highlight: false,
         render: {
@@ -80,19 +72,18 @@ $( document ).ready(function() {
         //     return "<div>" + (item.name ? '<span class="name">' + escape(item.name) + "</span>" : "") + (item.description ? '<span class="email">' + escape(item.email) + "</span>" : "") + "</div>";
         // },
           option: function (item, escape) {
-            var maxlen = 50;
-            // return "<div>" + '<span class="label">' + escape(label) + "</span>" + (caption ? '<span class="caption">' + escape(caption) + "</span>" : "<i>no description available</i>") + "</div>";
-            return v.vprintf('<div>\
-            <span class="name"> %s </span>\
-            <span class="caption"> <strong>description:</strong> %s </span>\
-            <span class="caption"> <strong>synonyms:</strong> %s </span>\
-            <span class="caption"> <strong>add. info:</strong> %s </span>\
-            </div>',
-            [v.truncate(escape(item.name), maxlen),
-             v.truncate(escape(item.description), maxlen - 'description:'.length),
-             v.truncate(escape(item.synonyms), maxlen - 'synonyms:'.length),
-             v.truncate(escape(item.additional_information), maxlen - 'add. info:'.length)
-            ])
+            let maxlen = 50;
+            let name = '<span class="name"> {} </span>'.format(v.truncate(escape(item.name), maxlen));
+            let description = item.description.length>0 ? '<span class="caption"> <strong>description:</strong> {} </span>'.format(v.truncate(escape(item.description), maxlen - 'description:'.length)) : "";
+            let synonyms = item.synonyms.length>0 ? '<span class="caption"> <strong>synonyms:</strong> {} </span>'.format(v.truncate(escape(item.synonyms), maxlen - 'synonyms:'.length)) : "";
+            let additional_information = item.additional_information>0 ? '<span class="caption"> <strong>add. info:</strong> {} </span>'.format(v.truncate(escape(item.additional_information), maxlen - 'add. info:'.length)) : "";
+
+            return '<div>\
+            {}\
+            {}\
+            {}\
+            {}\
+            </div>'.format(name, description, synonyms, additional_information);
           },
         }
     });
@@ -175,6 +166,9 @@ function drawNetwork(graphdata){
                             align: 'top', //'middle'
                             color: '#808080'
                         },
+                        chosen: {
+                            label: hover_edge_label
+                        },
                         color: {color: 'dimgrey', hover: 'blue'},
                         hoverWidth: 0.6
                         },
@@ -184,6 +178,10 @@ function drawNetwork(graphdata){
                         widthConstraint: { maximum: 100},
                         font: {
                             multi: 'html'
+                        },
+                        chosen: {
+                            node: hover_node,
+                            label: hover_node_label
                         }
                     },
                     physics: {
@@ -193,7 +191,7 @@ function drawNetwork(graphdata){
                         barnesHut: {
                             gravitationalConstant: -5000,
                             centralGravity: 0.5,
-                            springLength: 100,
+                            springLength: 150,
                             springConstant: 0.16,
                             damping: 0.25
                         },
@@ -218,6 +216,21 @@ function drawNetwork(graphdata){
     // network.on("stabilized", function (params) {
     //     network.fit({animation: {duration: 500}});
     //    });
+}
+
+
+function hover_edge_label(values, id, selected, hovering) {
+  values.mod = 'normal';
+}
+
+function hover_node_label(values, id, selected, hovering) {
+  values.mod = 'normal';
+}
+
+function hover_node(values, id, selected, hovering) {
+  values.borderWidth = 2;
+  values.borderColor = 'blue'
+  // values.color = 'blue'
 }
 
 function postprocess_edges(data) {
