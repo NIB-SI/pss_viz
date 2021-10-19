@@ -1,5 +1,5 @@
-import csv
-import subprocess
+# import csv
+# import subprocess
 import itertools
 import json
 import re
@@ -44,7 +44,6 @@ def decode_htmlentities(text):
             # in case of errors, return original input
             return match.group()
     return RE_HTML_ENTITY.sub(substitute_entity, text)
-
 
 
 def extract_subgraph(g, nodes, k=2, ignoreDirection=False):
@@ -170,21 +169,26 @@ def graph2json(nodelist, edgelist, g):
             label = label_parts[0]
         else:
             print('Warning: strangely formatted label: ', label)
-        nlist.append({'id': nodeid,
-                      'label': label,
-                      'group': attrs['labels'][0],
-                      'description': attrs.get('description', ''),
-                      'synonyms': ', '.join(attrs.get('synonyms', [])),
-                      'additional_information': attrs.get('additional_information', '')
-                      })
-                      # title is displayed on hover in vis.js
-                      # 'title': 'Name: {}\nSource: {}\nLink: {}'.format(node, 'NIB', 'http://mylink.com')})
+
+        nodeData = {'id': nodeid,
+                    'label': label,
+                    'group': attrs['labels'][0],
+                    'description': attrs.get('description', ''),
+                    'synonyms': ', '.join(attrs.get('synonyms', [])),
+                    'additional_information': attrs.get('additional_information', ''),
+                    'gmm_description': attrs.get('gmm_description', ''),
+                    'external_links': ', '.join(attrs.get('_external_links', '').split(' '))}
+        for atr in attrs:
+            if atr.endswith('_homologues'):
+                nodeData['_homologues'] = ', '.join(attrs[atr])
+                nodeData['_homologues_prefix'] = atr.split('_')[0]
+        nlist.append(nodeData)
+
     elist = []
     for fr, to, attrs in g.edges(data=True):
         elist.append({'from': fr,
                       'to': to,
-                      'label': attrs['label'].replace('_', ' ')}) #,
-                      # 'type': g.edges[edge]['type']})
+                      'label': attrs['label'].replace('_', ' ')})
     return {'network': {'nodes': nlist, 'edges': elist}, 'groups': groups_json}
 
 

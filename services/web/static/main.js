@@ -25,10 +25,11 @@ $( document ).ready(function() {
 
     $('#add2selected').click(function(){
         var selected_values = select[0].selectize.getValue();
-        var maxlen = 100;
+        // var maxlen = 100;
         // console.log(selected_values);
         selected_values.forEach(function (item, index) {
             let node = node_search_data_dict[item];
+            let nodeName = v.truncate(node.name, 25);
             let description = node.description.length>0 ? '<small><strong>description: </strong>{}</small>'.format(node.description) : "";
             let synonyms = node.synonyms.length>0 ? '<small><strong>synonyms: </strong>{}</small>'.format(node.synonyms) : "";
             let add_info = node.additional_information.length>0 ? '<small><strong>add. info: </strong>{}</small>'.format(node.additional_information) : "";
@@ -43,7 +44,7 @@ $( document ).ready(function() {
                 {}\
                 {}\
                 {}\
-                </a>'.format(node.name, description, synonyms, add_info, node_id);
+                </a>'.format(nodeName, description, synonyms, add_info, node_id);
 
          $('#queryList').append(list_item);
          // scroll to bottom
@@ -76,7 +77,7 @@ $( document ).ready(function() {
             let name = '<span class="name"> {} </span>'.format(v.truncate(escape(item.name), maxlen));
             let description = item.description.length>0 ? '<span class="caption"> <strong>description:</strong> {} </span>'.format(v.truncate(escape(item.description), maxlen - 'description:'.length)) : "";
             let synonyms = item.synonyms.length>0 ? '<span class="caption"> <strong>synonyms:</strong> {} </span>'.format(v.truncate(escape(item.synonyms), maxlen - 'synonyms:'.length)) : "";
-            let additional_information = item.additional_information>0 ? '<span class="caption"> <strong>add. info:</strong> {} </span>'.format(v.truncate(escape(item.additional_information), maxlen - 'add. info:'.length)) : "";
+            let additional_information = item.additional_information.length>0 ? '<span class="caption"> <strong>add. info:</strong> {} </span>'.format(v.truncate(escape(item.additional_information), maxlen - 'add. info:'.length)) : "";
 
             return '<div>\
             {}\
@@ -248,37 +249,32 @@ function postprocess_edges(data) {
 
 function postprocess_nodes(data) {
     data.nodes.forEach((item, i) => {
-        let maxlen = 200;
-        let title = v.vprintf('<table class="table table-striped table-bordered tooltip_table">\
-            <tbody>\
-              <tr>\
-                <td><strong>Name</strong></td>\
-                <td>%s</td>\
-              </tr>\
-              <tr>\
-                <td><strong>Group</strong></td>\
-                <td>%s</td>\
-              </tr>\
-              <tr>\
-                <td><strong>Description</strong></td>\
-                <td class="text-wrap">%s</td>\
-              </tr>\
-              <tr>\
-                <td><strong>Synonyms</strong></td>\
-                <td class="text-wrap">%s</td>\
-              </tr>\
-              <tr>\
-                <td><strong>Add. info</strong></td>\
-                <td class="text-wrap">%s</td>\
-              </tr>\
-            </tbody>\
-            </table>', [item.label,
-                item.group,
-                v.truncate(item.description, maxlen),
-                v.truncate(item.synonyms, maxlen),
-                v.truncate(item.additional_information, maxlen)]);
+        let maxlen = 100;
+        let header = '<table class="table table-striped table-bordered tooltip_table">\
+                      <tbody>';
+        let footer = '</tbody>\
+                      </table>';
+        let data = [['Name', item.label],
+                    ['Group', item.group],
+                    ['Description', v.truncate(item.description, maxlen)],
+                    ['Synonyms', v.truncate(item.synonyms, maxlen)],
+                    ['{}_homologues'.format(item._homologues_prefix), v.truncate(item._homologues, maxlen)],
+                    ['GoMapMan</br>description', v.truncate(item.gmm_description, maxlen)],
+                    ['Add. info', v.truncate(item.additional_information, maxlen)],
+                    ['External links:', item.external_links]];
 
-        item.title = htmlTitle(title);
+        let table = '';
+        data.forEach(function (item, index) {
+            if (item[1].length>0) {
+                let row = '<tr>\
+                                <td><strong>{}</strong></td>\
+                                <td class="text-wrap">{}</td>\
+                           </tr>'.format(item[0], item[1]);
+                table += row;
+            }
+        });
+        table = header + table + footer;
+        item.title = htmlTitle(table);
     });
 }
 
