@@ -11,7 +11,7 @@ $(window).resize(function() {
 
 $( document ).ready(function() {
     $.ajax({
-      url: "/get_node_data",
+      url: "/biomine/get_node_data",
       async: false,
       dataType: 'json',
       type: "POST",
@@ -98,7 +98,7 @@ $( document ).ready(function() {
             return;
 
         $.ajax({
-          url: "/search",
+          url: "/biomine/search",
           dataType: 'json',
           type: "POST",
           contentType: 'application/json; charset=utf-8',
@@ -119,7 +119,7 @@ $( document ).ready(function() {
 
     $('#draw_complete_network_button').click(function(){
         $.ajax({
-          url: "/get_network",
+          url: "/biomine/get_network",
           dataType: 'json',
           type: "GET",
           contentType: 'application/json; charset=utf-8',
