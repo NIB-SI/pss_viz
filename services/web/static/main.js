@@ -5,6 +5,10 @@ var select = null;
 
 format.extend (String.prototype, {});
 
+$(window).resize(function() {
+    scale();
+});
+
 $( document ).ready(function() {
     $.ajax({
       url: "/get_node_data",
@@ -286,6 +290,6 @@ function htmlTitle(html) {
 }
 
 function scale() {
-    $('#networkView').height(verge.viewportH()-10);
+    $('#networkView').height(verge.viewportH()-40);
     $('#networkView').width($('#networkViewContainer').width());
 }
