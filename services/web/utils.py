@@ -199,7 +199,8 @@ def graph2json(nodelist, edgelist, g):
                     'synonyms': ', '.join(attrs.get('synonyms', [])),
                     'additional_information': attrs.get('additional_information', ''),
                     'gmm_description': attrs.get('gmm_description', ''),
-                    'external_links': ', '.join(attrs.get('_external_links', '').split(' '))}
+                    'external_links': ', '.join(attrs.get('_external_links', '').split(' ')),
+                    'reaction_type':attrs.get('reaction_type', '')}
         for atr in attrs:
             if atr.endswith('_homologues'):
                 nodeData['_homologues'] = ', '.join(attrs[atr])
