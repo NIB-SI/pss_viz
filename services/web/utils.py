@@ -130,30 +130,52 @@ def parseJSON(path):
 def graph2json(nodelist, edgelist, g):
     groups = set()
     for node in nodelist:
-        groups.add(node['labels'][0])
+        groups.add(fetch_group(node['labels']))
     groups_json = {}
     for elt in groups:
         if elt == 'Complex':
             groups_json[elt] = {'shape': 'box',
                                 'color': {'background': 'AliceBlue'}}
-        elif elt == 'Family':
+        # plant genes -- shades of green
+        elif elt == 'PlantCoding':
             groups_json[elt] = {'shape': 'box',
-                                'color': {'background': 'Cornsilk'}}
-        elif elt == 'Foreign':
+                                'color': {'background': 'MediumAquaMarine'}}
+        elif elt == 'PlantNonCoding':
             groups_json[elt] = {'shape': 'box',
-                                'color': {'background': 'Gainsboro'}}
-        elif elt == 'FunctionalCluster':
+                                'color': {'background': 'PaleGreen'}}
+        elif elt == 'PlantAbstract':
             groups_json[elt] = {'shape': 'box',
-                                'color': {'background': 'Gainsboro'}}
+                                'color': {'background': 'MediumSeaGreen'}}
+
+        # bad guys -- shades of brown/orange
+        elif elt == 'ForeignCoding':
+            groups_json[elt] = {'shape': 'box',
+                                'color': {'background': 'SandyBrown'}}
+        elif elt == 'ForeignNonCoding':
+            groups_json[elt] = {'shape': 'box',
+                                'color': {'background': 'Wheat'}}
+        elif elt == 'ForeignAbstract':
+            groups_json[elt] = {'shape': 'box',
+                                'color': {'background': 'RosyBrown'}}
+        elif elt == 'ForeignEntity':
+            groups_json[elt] = {'shape': 'box',
+                                'color': {'background': 'Peru'}}
+
+        # every one else
         elif elt == 'Metabolite':
             groups_json[elt] = {'shape': 'box',
                                 'color': {'background': 'LavenderBlush'}}
+
         elif elt == 'Process':
             groups_json[elt] = {'shape': 'box',
                                 'color': {'background': 'PapayaWhip'}}
+
+        # "other" type of node
         elif elt == 'Reaction':
-            groups_json[elt] = {'shape': 'box',
-                                'color': {'background': 'PaleGoldenRod'}}
+            groups_json[elt] = {'shape': 'circle',
+                                'color': {'background': 'RoyalBlue'},
+                                'font':  {'color': "White" }}
+
         else:
             groups_json[elt] = {'shape': 'box',
                                 'color': {'background': 'White'}}
@@ -172,7 +194,7 @@ def graph2json(nodelist, edgelist, g):
 
         nodeData = {'id': nodeid,
                     'label': label,
-                    'group': attrs['labels'][0],
+                    'group': fetch_group(attrs['labels']),
                     'description': attrs.get('description', ''),
                     'synonyms': ', '.join(attrs.get('synonyms', [])),
                     'additional_information': attrs.get('additional_information', ''),
@@ -191,6 +213,15 @@ def graph2json(nodelist, edgelist, g):
                       'label': attrs['label'].replace('_', ' ')})
     return {'network': {'nodes': nlist, 'edges': elist}, 'groups': groups_json}
 
+
+def fetch_group(labels):
+    index_labels = ['Family', 'Plant', 'Foreign', 'Node', 'FunctionalCluster']
+    for x in labels:
+        if not (x in index_labels):
+            return x
+
+    # just in case
+    return labels[0]
 
 def get_autocomplete_node_data(g):
     data = []
