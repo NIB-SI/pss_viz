@@ -21,6 +21,8 @@
     <script src="{{ url_for('static', filename='main.js') }}"></script>
     <link href="{{ url_for('static', filename='main.css') }}" rel="stylesheet" />
 
+    <link rel="shortcut icon" href="/biomine/static/favicon.ico">
+
     <title>SKM - PSS explorer</title>
   </head>
   <body>
@@ -30,7 +32,7 @@
 
 
     <div class="container-fluid">
-        <div class="row">
+        <div class="row sticky-top">
           <ul class="nav navbar-nav" style="background: #00672c; color:floralwhite; width: 100%;">
             <a class="nav-link" href="/" style="color:floralwhite;  margin-left: 10px;"> &larr; Home</a>
           </ul>
@@ -45,8 +47,32 @@
              entities (including reactions) in PSS and add them to the query box.
               <br><br>
               <b>Clicking <em>extract subgraph</em>:</b> If the query contains only one node a
-              neighbourhood is returned. Otherwise, shortest paths between all pairs of nodes are merged and returned.
+              neighbourhood is returned. Otherwise, the undirected shortest paths between all pairs of nodes are merged and returned.
               </p>
+              <button type="button"  class="btn btn-outline-info" data-toggle="popover"
+                 data-bs-content='
+                 <div style="width:100%;">
+                 <p> Reactions (and interactions) in PSS are represented as nodes, the participants and the reaction itself, and edges (or arcs) connecting participants to the reaction in an informational way. <p>
+
+                 <p> For example, the following reaction  (A + B &rarr; C, catalysed by e):
+                    <div style="width:400; height:135">
+                      <img  width=400px; height=135px"  src="https://skm.nib.si/static/images/reaction_types/basic-reaction-biology.png"/>
+                    </div>
+                  Is represented in PSS as:
+                    <div style="width:400px; height:200px;">
+                      <img width=400 height=200 src="https://skm.nib.si/static/images/reaction_types/basic-reaction.png"/>
+                    </div>
+                  </p>
+
+                 <p>For more information, see <a href="https://skm.nib.si/documentation/pss-db#_9jzo3jll39m3">SKM Documentation &#167; Reactions</a>. </p>
+
+                 <p> Note that the shortest path does not take into account the direction of the edges and does not extract the complete reactions.
+                </div>'
+                 data-bs-html=true
+                 title="Help" >
+                 Interpreting the result
+              </button>
+
               </div>
             </div>
 
@@ -110,4 +136,14 @@
 
 
   </body>
+
+
+  <script type="text/javascript">
+    // enable all popover in the document:
+    $(document).ready(function () {
+        $('[data-toggle="popover"]').popover({
+          container: 'body'
+        })
+    });
+  </script>
 </html>
