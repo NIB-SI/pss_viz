@@ -8,8 +8,19 @@ from html.entities import name2codepoint as n2cp
 import networkx as nx
 # from fuzzywuzzy import fuzz, process
 
+import requests
+
 RE_HTML_ENTITY = re.compile(r'&(#?)([xX]?)(\w{1,8});', re.UNICODE)
 
+SPECIES = [
+    "ath",
+    "osa",
+    "stu",
+    "sly",
+    "nta",
+    "ptr",
+    "vvi",
+]
 
 # taken from gensim.utils
 def decode_htmlentities(text):
@@ -95,21 +106,48 @@ def extract_shortest_paths(g, query_nodes, ignoreDirection=True):
 #     nx.drawing.nx_pydot.write_dot(g, dotfile)
 #     subprocess.call(['dot', '-T{}'.format(output), dotfile, '-o', '{}.{}'.format(path, output)])  # , cwd=outdir)
 
-def parseJSON(path):
+def parseJSON(url=None, path=None, headers={}):
+    '''Try url first, if failed, fall back to path'''
+
     nodes = []
     edges = []
-    with open(path) as fp:
-        for line in fp:
-            line = json.loads(line)
-            if line['type'] == 'node':
-                nodes.append(line)
-            elif line['type'] == 'relationship':
-                edges.append(line)
-            else:
-                raise ValueError('Unknown line')
-            # print(line)
-
     g = nx.DiGraph()
+
+    if not (path or url):
+        raise Exception("ERROR: at least path or url")
+
+    success = False
+    if url:
+        try:
+            response = requests.get(url, headers=headers)
+            if response.ok:
+                success = True
+                for line in response.text.split("\n"):
+                    line = json.loads(line)
+                    if line['type'] == 'node':
+                        nodes.append(line)
+                    elif line['type'] == 'relationship':
+                        edges.append(line)
+                    else:
+                        raise ValueError('Unknown line')
+                    # print(line)
+        except Exception as e:
+            print(f"Error: could not fetch file from url: {e}")
+            raise e
+
+    if not success:
+        with open(path) as fp:
+            for line in fp:
+                # current_app.logger.info(line)
+                line = json.loads(line)
+                if line['type'] == 'node':
+                    nodes.append(line)
+                elif line['type'] == 'relationship':
+                    edges.append(line)
+                else:
+                    raise ValueError('Unknown line')
+                # print(line)
+
     for node in nodes:
         # g.add_node(node['id'], name=node['properties']['name'], labels=node['labels'])
         node['properties']['name'] = decode_htmlentities(node['properties']['name'])
@@ -228,7 +266,7 @@ def get_autocomplete_node_data(g):
     data = []
     for nodeid, attrs in g.nodes(data=True):
         elt = {'id': nodeid}
-        for atr in ['name', 'synonyms', 'description', 'additional_information']:
+        for atr in ['name', 'synonyms', 'description', 'additional_information'] + [f'{sp}_homologues' for sp in SPECIES]:
             elt[atr] = attrs.get(atr, '')
         elt['synonyms'] = ', '.join(elt['synonyms'])
         data.append(elt)
