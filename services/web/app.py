@@ -5,6 +5,9 @@ import networkx as nx
 
 from flask import Flask, flash, g, redirect, render_template, request, session
 from flask import Blueprint
+
+import redis
+
 from flask_cors import CORS, cross_origin
 
 try:
@@ -12,16 +15,28 @@ try:
 except ImportError:
     import utils
 
+PSS_URL = "http://web:5000/downloads/pss/pss-pssviz.json"
 BASEDIR = os.path.dirname(__file__)
-# with open(os.path.join(BASEDIR, 'data/pss_visjs.json')) as fp:
-#     pss_visjs = json.load(fp)
-# with open(os.path.join(BASEDIR, 'data/pss_g6.json')) as fp:
-#     pss_g6 = json.load(fp)
 
-#_n, _e, _graph = utils.parseJSON(os.path.join(BASEDIR, 'data/PSS-latest.json'))
-_n, _e, _graph = utils.parseJSON(os.path.join(BASEDIR, 'data/PSS-reactions.json'))
-full_json = utils.graph2json(_n, _e, _graph)
-node_search_data = utils.get_autocomplete_node_data(_graph)
+
+from flask_session import Session
+sess = Session()
+
+class PSS(object):
+    """docstring for PSS"""
+    def __init__(self):
+        self.load()
+
+    def load(self, headers={}):
+        self._n, self._e, self._graph = utils.parseJSON(
+             url=PSS_URL,
+             path=os.path.join(BASEDIR, 'data/PSS-reactions.json'),
+             headers=headers)
+        self.full_json = utils.graph2json(self._n, self._e, self._graph)
+        self.node_search_data = utils.get_autocomplete_node_data(self._graph)
+
+# make global, update local
+pss = PSS()
 
 bp = Blueprint('bp', __name__,
                url_prefix='/biomine',
@@ -29,15 +44,21 @@ bp = Blueprint('bp', __name__,
 
 @bp.route('/get_node_data', methods=['GET', 'POST'])
 def node_data():
-    return node_search_data
+    return pss.node_search_data
 
 @bp.route('/get_network', methods=['GET', 'POST'])
 def draw_network():
-    return full_json
+    return pss.full_json
 
 # @app.route('/get_network_g6', methods=['GET', 'POST'])
 # def draw_network_g6():
 #     return {} #pss_g6
+
+# @app.route('/full')
+# @cross_origin()
+# def draw_full():
+#     return full_json
+#
 
 @bp.route('/search', methods=['GET', 'POST'])
 def search():
@@ -47,27 +68,34 @@ def search():
     except Exception as e:
         return {'error': 'Invalid query data'}
 
-    subgraph = utils.extract_shortest_paths(_graph, query_nodes, ignoreDirection=True)
-    return utils.graph2json(_n, _e, subgraph)
+    subgraph = utils.extract_shortest_paths(pss._graph, query_nodes, ignoreDirection=True)
+    return utils.graph2json(pss._n, pss._e, subgraph)
 
 @bp.route('/')
 @cross_origin()
 def main():
+    if '_user_id' in session:
+        headers = headers={'Userid':session['_user_id']}
+    else:
+        headers = {}
+
+    # refresh pss
+    pss.load(headers=headers)
+
     return render_template('index.html')
 
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
     CORS(app)
-    app.config.from_mapping(
-        SECRET_KEY='dev',
-    )
 
-    # @app.route('/full')
-    # @cross_origin()
-    # def draw_full():
-    #     return full_json
-    #
+    app.config.from_mapping(
+        # Flask Session settings
+        SESSION_TYPE = 'redis',
+        SESSION_REDIS = redis.Redis(host='redis', port=6379)
+    )
+    sess.init_app(app)
+
     app.register_blueprint(bp)
     return app
 
