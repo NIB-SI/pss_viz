@@ -4,7 +4,6 @@ import itertools
 import networkx as nx
 
 from flask import Flask, flash, g, redirect, render_template, request, session
-
 import redis
 
 from flask_cors import CORS, cross_origin
@@ -16,6 +15,7 @@ except ImportError:
 
 PSS_URL = "http://web:5000/downloads/pss/pss-pssviz.json"
 BASEDIR = os.path.dirname(__file__)
+
 
 
 from flask_session import Session
@@ -36,7 +36,6 @@ class PSS(object):
 
 # make global, update local
 pss = PSS()
-
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
@@ -92,6 +91,5 @@ def create_app(test_config=None):
     #     return full_json
     #
 
-    return app
 
 app = create_app()
