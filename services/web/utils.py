@@ -8,8 +8,19 @@ from html.entities import name2codepoint as n2cp
 import networkx as nx
 # from fuzzywuzzy import fuzz, process
 
+import requests
+
 RE_HTML_ENTITY = re.compile(r'&(#?)([xX]?)(\w{1,8});', re.UNICODE)
 
+SPECIES = [
+    "ath",
+    "osa",
+    "stu",
+    "sly",
+    "nta",
+    "ptr",
+    "vvi",
+]
 
 # taken from gensim.utils
 def decode_htmlentities(text):
@@ -95,21 +106,48 @@ def extract_shortest_paths(g, query_nodes, ignoreDirection=True):
 #     nx.drawing.nx_pydot.write_dot(g, dotfile)
 #     subprocess.call(['dot', '-T{}'.format(output), dotfile, '-o', '{}.{}'.format(path, output)])  # , cwd=outdir)
 
-def parseJSON(path):
+def parseJSON(url=None, path=None, headers={}):
+    '''Try url first, if failed, fall back to path'''
+
     nodes = []
     edges = []
-    with open(path) as fp:
-        for line in fp:
-            line = json.loads(line)
-            if line['type'] == 'node':
-                nodes.append(line)
-            elif line['type'] == 'relationship':
-                edges.append(line)
-            else:
-                raise ValueError('Unknown line')
-            # print(line)
-
     g = nx.DiGraph()
+
+    if not (path or url):
+        raise Exception("ERROR: at least path or url")
+
+    success = False
+    if url:
+        try:
+            response = requests.get(url, headers=headers)
+            if response.ok:
+                success = True
+                for line in response.text.split("\n"):
+                    line = json.loads(line)
+                    if line['type'] == 'node':
+                        nodes.append(line)
+                    elif line['type'] == 'relationship':
+                        edges.append(line)
+                    else:
+                        raise ValueError('Unknown line')
+                    # print(line)
+        except Exception as e:
+            print(f"Error: could not fetch file from url: {e}")
+            raise e
+
+    if not success:
+        with open(path) as fp:
+            for line in fp:
+                # current_app.logger.info(line)
+                line = json.loads(line)
+                if line['type'] == 'node':
+                    nodes.append(line)
+                elif line['type'] == 'relationship':
+                    edges.append(line)
+                else:
+                    raise ValueError('Unknown line')
+                # print(line)
+
     for node in nodes:
         # g.add_node(node['id'], name=node['properties']['name'], labels=node['labels'])
         node['properties']['name'] = decode_htmlentities(node['properties']['name'])
@@ -130,30 +168,52 @@ def parseJSON(path):
 def graph2json(nodelist, edgelist, g):
     groups = set()
     for node in nodelist:
-        groups.add(node['labels'][0])
+        groups.add(fetch_group(node['labels']))
     groups_json = {}
     for elt in groups:
         if elt == 'Complex':
             groups_json[elt] = {'shape': 'box',
                                 'color': {'background': 'AliceBlue'}}
-        elif elt == 'Family':
+        # plant genes -- shades of green
+        elif elt == 'PlantCoding':
             groups_json[elt] = {'shape': 'box',
-                                'color': {'background': 'Cornsilk'}}
-        elif elt == 'Foreign':
+                                'color': {'background': 'MediumAquaMarine'}}
+        elif elt == 'PlantNonCoding':
             groups_json[elt] = {'shape': 'box',
-                                'color': {'background': 'Gainsboro'}}
-        elif elt == 'FunctionalCluster':
+                                'color': {'background': 'PaleGreen'}}
+        elif elt == 'PlantAbstract':
             groups_json[elt] = {'shape': 'box',
-                                'color': {'background': 'Gainsboro'}}
+                                'color': {'background': 'MediumSeaGreen'}}
+
+        # bad guys -- shades of brown/orange
+        elif elt == 'ForeignCoding':
+            groups_json[elt] = {'shape': 'box',
+                                'color': {'background': 'SandyBrown'}}
+        elif elt == 'ForeignNonCoding':
+            groups_json[elt] = {'shape': 'box',
+                                'color': {'background': 'Wheat'}}
+        elif elt == 'ForeignAbstract':
+            groups_json[elt] = {'shape': 'box',
+                                'color': {'background': 'RosyBrown'}}
+        elif elt == 'ForeignEntity':
+            groups_json[elt] = {'shape': 'box',
+                                'color': {'background': 'Peru'}}
+
+        # every one else
         elif elt == 'Metabolite':
             groups_json[elt] = {'shape': 'box',
                                 'color': {'background': 'LavenderBlush'}}
+
         elif elt == 'Process':
             groups_json[elt] = {'shape': 'box',
                                 'color': {'background': 'PapayaWhip'}}
+
+        # "other" type of node
         elif elt == 'Reaction':
-            groups_json[elt] = {'shape': 'box',
-                                'color': {'background': 'PaleGoldenRod'}}
+            groups_json[elt] = {'shape': 'circle',
+                                'color': {'background': 'RoyalBlue'},
+                                'font':  {'color': "White" }}
+
         else:
             groups_json[elt] = {'shape': 'box',
                                 'color': {'background': 'White'}}
@@ -172,12 +232,13 @@ def graph2json(nodelist, edgelist, g):
 
         nodeData = {'id': nodeid,
                     'label': label,
-                    'group': attrs['labels'][0],
+                    'group': fetch_group(attrs['labels']),
                     'description': attrs.get('description', ''),
                     'synonyms': ', '.join(attrs.get('synonyms', [])),
                     'additional_information': attrs.get('additional_information', ''),
                     'gmm_description': attrs.get('gmm_description', ''),
-                    'external_links': ', '.join(attrs.get('_external_links', '').split(' '))}
+                    'external_links': ', '.join(attrs.get('_external_links', '').split(' ')),
+                    'reaction_type':attrs.get('reaction_type', '')}
         for atr in attrs:
             if atr.endswith('_homologues'):
                 nodeData['_homologues'] = ', '.join(attrs[atr])
@@ -192,11 +253,20 @@ def graph2json(nodelist, edgelist, g):
     return {'network': {'nodes': nlist, 'edges': elist}, 'groups': groups_json}
 
 
+def fetch_group(labels):
+    index_labels = ['Family', 'Plant', 'Foreign', 'Node', 'FunctionalCluster']
+    for x in labels:
+        if not (x in index_labels):
+            return x
+
+    # just in case
+    return labels[0]
+
 def get_autocomplete_node_data(g):
     data = []
     for nodeid, attrs in g.nodes(data=True):
         elt = {'id': nodeid}
-        for atr in ['name', 'synonyms', 'description', 'additional_information']:
+        for atr in ['name', 'synonyms', 'description', 'additional_information'] + [f'{sp}_homologues' for sp in SPECIES]:
             elt[atr] = attrs.get(atr, '')
         elt['synonyms'] = ', '.join(elt['synonyms'])
         data.append(elt)

@@ -65,9 +65,13 @@
     /* width: 300px;
     max-width: 300px !important; */
     /* over-flow: break-word; */
-} */
+/*} */
 
 /* .textwrap {
     overflow-wrap: anywhere;
     white-space: normal;
 } */
+
+.popover {
+    max-width: 460px;
+}

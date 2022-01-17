@@ -260,6 +260,7 @@ function postprocess_nodes(data) {
                       </table>';
         let data = [['Name', item.label],
                     ['Group', item.group],
+                    ['Reaction type', item.reaction_type],
                     ['Description', v.truncate(item.description, maxlen)],
                     ['Synonyms', v.truncate(item.synonyms, maxlen)],
                     ['{}_homologues'.format(item._homologues_prefix), v.truncate(item._homologues, maxlen)],
