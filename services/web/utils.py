@@ -91,7 +91,10 @@ def extract_shortest_paths(g, query_nodes, ignoreDirection=True):
 
     # print('--->', query_nodes)
     if len(query_nodes) == 1:
-        subgraph = extract_subgraph(g, query_nodes, k=2, ignoreDirection=ignoreDirection)
+        if 'Reaction' in g.nodes[list(query_nodes)[0]]['labels']:
+            subgraph = extract_subgraph(g, query_nodes, k=1, ignoreDirection=ignoreDirection)
+        else:
+            subgraph = extract_subgraph(g, query_nodes, k=2, ignoreDirection=ignoreDirection)
         paths_nodes = subgraph.nodes()
     else:
         paths_nodes = []
