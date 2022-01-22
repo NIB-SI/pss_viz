@@ -255,10 +255,8 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
 
         if nodeid in query_nodes:
             nodeData['color'] = {'border': 'red',
-                                 'highlight': {'border': 'red',
-                                               'background': 'yellow'},
-                                 'hover': {'border': 'red',
-                                            'background': 'yellow'}}
+                                 'highlight': {'border': 'red'},  # this does not work, bug in vis.js
+                                 'hover': {'border': 'red'}}  # this does not work, bug in vis.js
             nodeData['borderWidth'] = 2
         nlist.append(nodeData)
 
