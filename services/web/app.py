@@ -42,11 +42,18 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     CORS(app)
 
-    app.config.from_mapping(
-        # Flask Session settings
-        SESSION_TYPE = 'redis',
-        SESSION_REDIS = redis.Redis(host='redis', port=6379)
-    )
+    rport = 6379
+    rs = redis.Redis(host='redis', port=rport)
+    try:
+        rs.ping()
+    except redis.exceptions.ConnectionError:
+        print(f'Warning: Redis is not running on port {rport}. Not using this setting.')
+    else:
+        app.config.from_mapping(
+            # Flask Session settings
+            SESSION_TYPE = 'redis',
+            SESSION_REDIS = redis.Redis(host='redis', port=rport)
+        )
     sess.init_app(app)
 
     @app.route('/get_node_data', methods=['GET', 'POST'])
@@ -57,10 +64,6 @@ def create_app(test_config=None):
     def draw_network():
         return pss.full_json
 
-    # @app.route('/get_network_g6', methods=['GET', 'POST'])
-    # def draw_network_g6():
-    #     return {} #pss_g6
-
     @app.route('/search', methods=['GET', 'POST'])
     def search():
         try:
@@ -70,6 +73,17 @@ def create_app(test_config=None):
             return {'error': 'Invalid query data'}
 
         subgraph = utils.extract_shortest_paths(pss._graph, query_nodes, ignoreDirection=True)
+        return utils.graph2json(pss._n, pss._e, subgraph, query_nodes=query_nodes)
+
+    @app.route('/expand', methods=['GET', 'POST'])
+    def expand():
+        try:
+            data = request.get_json(force=False)
+            query_nodes = set(data.get('nodes'))
+        except Exception as e:
+            return {'error': 'Invalid query data'}
+
+        subgraph = utils.expand_nodes(pss._graph, list(query_nodes))
         return utils.graph2json(pss._n, pss._e, subgraph)
 
     @app.route('/')
@@ -77,7 +91,7 @@ def create_app(test_config=None):
     def main():
 
         if '_user_id' in session:
-            headers = headers={'Userid':session['_user_id']}
+            headers = {'Userid': session['_user_id']}
         else:
             headers = {}
 
@@ -85,12 +99,6 @@ def create_app(test_config=None):
         pss.load(headers=headers)
 
         return render_template('index.html')
-
-    # @app.route('/full')
-    # @cross_origin()
-    # def draw_full():
-    #     return full_json
-    #
 
     return app
 

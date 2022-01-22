@@ -75,3 +75,11 @@
 .popover {
     max-width: 460px;
 }
+
+.vex-content {
+    width: 550px !important;
+    font-size: 1em !important;
+    /* line-height: 1.5em !important; */
+    font-family: var(--bs-font-sans-serif) !important;
+
+}
