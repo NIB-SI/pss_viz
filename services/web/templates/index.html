@@ -18,8 +18,22 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/voca/1.4.0/voca.min.js" integrity="sha512-yrLbujQF3UPLrlaavtewYmv7OFD8AGO5PS8jg0VKlXP8kW9POHaG/bbpwSbpkqe4SCXVwTtYAMsKdOukT11bxQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/string-format/0.5.0/string-format.min.js" integrity="sha512-umUQjNj1rAebq5zbgyU2sFNEREC48ohuUAdAwTa1qbEibzzbTnJLhj8ASNNsoKkWQ3ef+QjtZvGgVWJulLetxQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/vex-js/4.1.0/css/vex.min.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/vex-js/4.1.0/css/vex-theme-default.min.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vex-js/4.1.0/js/vex.combined.min.js"></script>
+    <script>vex.defaultOptions.className = 'vex-theme-default'</script>
+
+    <!-- context menus -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.min.js" integrity="sha512-kvg/Lknti7OoAw0GqMBP8B+7cGHvp4M9O9V6nAYG91FZVDMW3Xkkq5qrdMhrXiawahqU7IZ5CNsY/wWy1PpGTQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.css" integrity="sha512-EF5k2tHv4ShZB7zESroCVlbLaZq2n8t1i8mr32tgX0cyoHc3GfxuP7IoT8w/pD+vyoq7ye//qkFEqQao7Ofrag==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+    <link href="{{ url_for('static', filename='main.css') }}" rel="stylesheet" />
+
     <script src="{{ url_for('bp.static', filename='main.js') }}"></script>
     <link href="{{ url_for('bp.static', filename='main.css') }}" rel="stylesheet" />
+
 
     <link rel="shortcut icon" href="/biomine/static/favicon.ico">
 
@@ -84,12 +98,24 @@
                     </div>
                 </div>
 
-                <div class="container mb-3 me-0 pe-0">
-                  <div class="row">
-                    <div class="col-md-6 offset-md-6 me-0">
+                <div class="container mb-3 me-0 pe-0 ps-0">
+
+                    <div class="row justify-content-between">
+                      <div class="col-6">
+                        <input class="form-check-input" type="checkbox" id="showTooltipsCbox" value="" aria-label="...">
+                        <label for="form-check-input">show tooltips</label>
+                      </div>
+                      <div class="col-6">
+                        <button type="button" class="btn btn-outline-primary float-end" id="add2selected">add to query</button>
+                      </div>
+                    </div>
+
+                  <!-- <div class="row">
+                    <div class="col-md-6  me-0">
                         <button type="button" class="btn btn-outline-primary float-end" id="add2selected">add to query</button>
                     </div>
-                  </div>
+                  </div> -->
+
                 </div>
 
                 <!-- <div class="mb-3">

@@ -1,4 +1,14 @@
-var network = null;
+var netviz = {
+    nodes: undefined,
+    edges: undefined,
+    network: undefined,
+    isFrozen: false,
+    newNodes: undefined,
+    newEdges: undefined
+};
+
+
+// var network = null;
 var node_search_data = null;
 var node_search_data_dict = null;
 var select = null;
@@ -134,29 +144,43 @@ $( document ).ready(function() {
         });
     });
 
+    $("#showTooltipsCbox").change(function() {
+        if (netviz.network) {
+            if (this.checked) {
+                netviz.network.setOptions({interaction:{tooltipDelay:200}});
+            }
+            else {
+                netviz.network.setOptions({interaction:{tooltipDelay:3600000}});
+            }
+        }
+    });
+    $("#showTooltipsCbox").prop("checked", false);
+
     scale();
+    initContextMenus();
 });
 
 
 function drawNetwork(graphdata){
-     var nodes = new vis.DataSet(graphdata.network.nodes);
-     // nodes = new vis.DataSet(graphdata.network.nodes);
-     var edges = new vis.DataSet(graphdata.network.edges);
+     netviz.nodes = new vis.DataSet(graphdata.network.nodes);
+     netviz.edges = new vis.DataSet(graphdata.network.edges);
 
      // create a network
      var container = document.getElementById('networkView');
 
      // provide the data in the vis format
      var data = {
-         nodes: nodes,
-         edges: edges
+         nodes: netviz.nodes,
+         edges: netviz.edges
      };
 
      // console.log(data);
      var options = {groups: graphdata.groups,
                     interaction: {hover: true,
                                   navigationButtons: true,
-                                  multiselect: true},
+                                  multiselect: true,
+                                  tooltipDelay: 3600000,  // effectively disabled by very long delay
+                                },
                     edges: {
                         arrows: 'to',
                         smooth: {
@@ -214,10 +238,13 @@ function drawNetwork(graphdata){
                         improvedLayout: true
                     }
     };
-    postprocess_edges(data);
-    postprocess_nodes(data);
+    postprocess_edges(data.edges);
+    postprocess_nodes(data.nodes);
     // var network = new vis.Network(container, data, options);
-    network = new vis.Network(container, data, options);
+    netviz.network = new vis.Network(container, data, options);
+    netviz.network.on('dragStart', onDragStart);
+    netviz.network.on('dragEnd', onDragEnd);
+
     // network.on("stabilized", function (params) {
     //     network.fit({animation: {duration: 500}});
     //    });
@@ -238,8 +265,8 @@ function hover_node(values, id, selected, hovering) {
   // values.color = 'blue'
 }
 
-function postprocess_edges(data) {
-    data.edges.forEach((item, i) => {
+function postprocess_edges(edges) {
+    edges.forEach((item, i) => {
         // item.label = item.type;
         // if(item.type == 'binding') {
         //     item.arrows = undefined;
@@ -251,35 +278,41 @@ function postprocess_edges(data) {
     });
 }
 
-function postprocess_nodes(data) {
-    data.nodes.forEach((item, i) => {
-        let maxlen = 100;
-        let header = '<table class="table table-striped table-bordered tooltip_table">\
-                      <tbody>';
-        let footer = '</tbody>\
-                      </table>';
-        let data = [['Name', item.label],
-                    ['Group', item.group],
-                    ['Reaction type', item.reaction_type],
-                    ['Description', v.truncate(item.description, maxlen)],
-                    ['Synonyms', v.truncate(item.synonyms, maxlen)],
-                    ['{}_homologues'.format(item._homologues_prefix), v.truncate(item._homologues, maxlen)],
-                    ['GoMapMan</br>description', v.truncate(item.gmm_description, maxlen)],
-                    ['Add. info', v.truncate(item.additional_information, maxlen)],
-                    ['External links:', item.external_links]];
+function postprocess_node(item) {
+    let maxlen = 100;
+    let header = '<table class="table table-striped table-bordered tooltip_table">\
+                  <tbody>';
+    let footer = '</tbody>\
+                  </table>';
+    let data = [['Name', item.label],
+                ['Group', item.group],
+                ['Reaction type', item.reaction_type],
+                ['Description', v.truncate(item.description, maxlen)],
+                ['Synonyms', v.truncate(item.synonyms, maxlen)],
+                ['{}_homologues'.format(item._homologues_prefix), v.truncate(item._homologues, maxlen)],
+                ['GoMapMan</br>description', v.truncate(item.gmm_description, maxlen)],
+                ['Add. info', v.truncate(item.additional_information, maxlen)],
+                ['External links:', item.external_links]];
 
-        let table = '';
-        data.forEach(function (item, index) {
-            if (item[1].length>0) {
-                let row = '<tr>\
-                                <td><strong>{}</strong></td>\
-                                <td class="text-wrap">{}</td>\
-                           </tr>'.format(item[0], item[1]);
-                table += row;
-            }
-        });
-        table = header + table + footer;
-        item.title = htmlTitle(table);
+    let table = '';
+    data.forEach(function (item, index) {
+        if (item[1].length>0) {
+            let row = '<tr>\
+                            <td><strong>{}</strong></td>\
+                            <td class="text-wrap">{}</td>\
+                       </tr>'.format(item[0], item[1]);
+            table += row;
+        }
+    });
+    table = header + table + footer;
+    item.title = htmlTitle(table);
+    return item;
+}
+
+function postprocess_nodes(nodes) {
+    nodes.forEach((item, i) => {
+        // console.log('postproceesing ' + item.label);
+        nodes[i] = postprocess_node(item);
     });
 }
 
@@ -293,4 +326,205 @@ function htmlTitle(html) {
 function scale() {
     $('#networkView').height(verge.viewportH()-40);
     $('#networkView').width($('#networkViewContainer').width());
+}
+
+function freezeNodes(state){
+    netviz.network.stopSimulation();
+    netviz.nodes.forEach(function(node, id){
+        netviz.nodes.update({id: id, fixed: state});
+    });
+    netviz.network.startSimulation();
+}
+
+function onDragStart(obj) {
+    if (obj.hasOwnProperty('nodes') && obj.nodes.length==1) {
+        var nid = obj.nodes[0];
+        netviz.nodes.update({id: nid, fixed: false});
+    }
+
+}
+
+function onDragEnd(obj) {
+    if (netviz.isFrozen==false)
+        return
+    var nid = obj.nodes;
+    if (obj.hasOwnProperty('nodes') && obj.nodes.length==1) {
+        var nid = obj.nodes[0];
+        netviz.nodes.update({id: nid, fixed: true});
+    }
+}
+
+function formatNodeInfoVex(nid) {
+    return netviz.nodes.get(nid).title;
+}
+
+function expandNode(nid) {
+    $.ajax({
+      url: "/biomine/expand",
+      async: false,
+      dataType: 'json',
+      type: "POST",
+      contentType: 'application/json; charset=utf-8',
+      processData: false,
+      data: JSON.stringify({'nodes': [nid]}),
+      success: function( data, textStatus, jQxhr ){
+          if (data.error) {
+              vex.dialog.alert('Server error when expanding the node. Please report the incident.')
+          }
+          else {
+              let newCounter = 0
+              data.network.nodes.forEach((item, i) => {
+                  if (!netviz.nodes.get(item.id)) {
+                      netviz.nodes.add(postprocess_node(item));
+                      newCounter += 1;
+                  }
+                  else {
+                      // console.log('Already present ' + item.id + item.label)
+                  }
+              })
+              if (newCounter==0) {
+                  vex.dialog.alert('No new nodes can be added.');
+                  return;
+              }
+
+              data.network.edges.forEach((newEdge, i) => {
+                  let mustAdd = true;
+                  netviz.edges.forEach((oldEdge, i) => {
+                      if (newEdge.from == oldEdge.from &&
+                          newEdge.to == oldEdge.to &&
+                          newEdge.label == oldEdge.label) {
+                              mustAdd = false;
+                      }
+                  })
+                  if (mustAdd) {
+                      netviz.edges.add(newEdge);
+                  }
+              })
+          }
+      },
+      error: function( jqXhr, textStatus, errorThrown ){
+          alert('Server error while loading node data.');
+      }
+    });
+
+}
+
+
+function initContextMenus() {
+    var canvasMenu = {
+        "stop": {name: "Stop simulation"},
+        "start" : {name: "Start simulation"}
+    };
+    var canvasMenu = {
+        "freeze": {name: "Freeze positions"},
+        // "release" : {name: "Start simulation"}
+    };
+    var nodeMenuFix = {
+        "delete": {name: "Delete"},
+        "expand": {name: "Expand"},
+        "fix": {name: "Fix position"},
+        "info": {name: "Info"}
+    };
+    var nodeMenuRelease = {
+        "delete": {name: "Delete"},
+        "expand": {name: "Expand"},
+        "release": {name: "Release position"},
+        "info": {name: "Info"}
+    };
+    var edgeMenu = {
+        "delete": {name: "Delete"},
+        // "info": {name: "Info"}
+    };
+
+    $.contextMenu({
+            selector: 'canvas',
+            build: function($trigger, e) {
+                // this callback is executed every time the menu is to be shown
+                // its results are destroyed every time the menu is hidden
+                // e is the original contextmenu event, containing e.pageX and e.pageY (amongst other data)
+
+                var hoveredEdge = undefined;
+                var hoveredNode = undefined;
+                if (!$.isEmptyObject(netviz.network.selectionHandler.hoverObj.nodes)) {
+                    hoveredNode = netviz.network.selectionHandler.hoverObj.nodes[Object.keys(netviz.network.selectionHandler.hoverObj.nodes)[0]];
+                }
+                else {
+                    hoveredNode = undefined;
+                }
+                if (!$.isEmptyObject(netviz.network.selectionHandler.hoverObj.edges)) {
+                    hoveredEdge = netviz.network.selectionHandler.hoverObj.edges[Object.keys(netviz.network.selectionHandler.hoverObj.edges)[0]];
+                }
+                else {
+                    hoveredEdge = undefined;
+                }
+
+                // ignore auto-highlighted edge(s) on node hover
+                if (hoveredNode != undefined && hoveredEdge != undefined)
+                    hoveredEdge = undefined;
+
+                if (hoveredNode != undefined && hoveredEdge == undefined) {
+                    return {
+                        callback: function(key, options) {
+                            if (key == "delete") {
+                                netviz.nodes.remove(hoveredNode);
+                            }
+                            else if (key == "expand") {
+                                expandNode(hoveredNode.id);
+                                // vex.dialog.alert("Not yet implemented.");
+                            }
+                            else if (key == "fix") {
+                                netviz.nodes.update({id: hoveredNode.id, fixed: true});
+                            }
+                            else if (key == "release") {
+                                netviz.nodes.update({id: hoveredNode.id, fixed: false});
+                            }
+                            else if (key == "info") {
+                                vex.dialog.alert({unsafeMessage: formatNodeInfoVex(hoveredNode.id)});
+                            }
+                        },
+                        items: netviz.nodes.get(hoveredNode.id).fixed ? nodeMenuRelease : nodeMenuFix
+                    };
+                }
+                else if (hoveredNode == undefined && hoveredEdge != undefined) {
+                    return {
+                        callback: function(key, options) {
+                            if (key == "delete") {
+                                netviz.edges.remove(hoveredEdge);
+                            }
+                            else if (key == "info") {
+                                vex.dialog.alert({unsafeMessage: formatEdgeInfoVex(hoveredEdge.id)});
+                            }
+                        },
+                        items: edgeMenu
+                    };
+                }
+                else {
+                    if (netviz.isFrozen) {
+                        canvasMenu.freeze.name = "Release positions";
+                        return {
+                            callback: function(key, options) {
+                                if (key == "freeze") {
+                                    netviz.isFrozen = false;
+                                    freezeNodes(netviz.isFrozen);
+                                }
+                            },
+                            items: canvasMenu
+                        };
+                    }
+                    else {
+                        canvasMenu.freeze.name = "Freeze positions";
+                        return {
+                            callback: function(key, options) {
+                                if (key == "freeze") {
+                                    netviz.isFrozen = true;
+                                    freezeNodes(netviz.isFrozen);
+                                }
+                            },
+                            items: canvasMenu
+                        };
+                    }
+                }
+            }
+        });
+
 }

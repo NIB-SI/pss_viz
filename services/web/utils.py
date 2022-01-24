@@ -22,6 +22,7 @@ SPECIES = [
     "vvi",
 ]
 
+
 # taken from gensim.utils
 def decode_htmlentities(text):
     def safe_unichr(intval):
@@ -57,6 +58,14 @@ def decode_htmlentities(text):
     return RE_HTML_ENTITY.sub(substitute_entity, text)
 
 
+def expand_nodes(g, nodes):
+    if len(nodes) > 1:
+        print('Error : expand not implemented for more than one node')
+    node = nodes[0]
+    ug = nx.Graph(g.copy())
+    return g.subgraph([node] + list(ug.neighbors(node)))
+
+
 def extract_subgraph(g, nodes, k=2, ignoreDirection=False):
     nodes = [node for node in nodes if node in g.nodes]
 
@@ -82,7 +91,10 @@ def extract_shortest_paths(g, query_nodes, ignoreDirection=True):
 
     # print('--->', query_nodes)
     if len(query_nodes) == 1:
-        subgraph = extract_subgraph(g, query_nodes, k=2, ignoreDirection=ignoreDirection)
+        if 'Reaction' in g.nodes[list(query_nodes)[0]]['labels']:
+            subgraph = extract_subgraph(g, query_nodes, k=1, ignoreDirection=ignoreDirection)
+        else:
+            subgraph = extract_subgraph(g, query_nodes, k=2, ignoreDirection=ignoreDirection)
         paths_nodes = subgraph.nodes()
     else:
         paths_nodes = []
@@ -95,7 +107,7 @@ def extract_shortest_paths(g, query_nodes, ignoreDirection=True):
                 print('No paths:', fr, to)
                 pass
         # add back also nodes with no paths
-        # this also cover the case with no paths at all
+        # this also covers the case with no paths at all
         paths_nodes = set(paths_nodes).union(query_nodes)
 
     return g.subgraph(paths_nodes).copy()
@@ -131,9 +143,9 @@ def parseJSON(url=None, path=None, headers={}):
                     else:
                         raise ValueError('Unknown line')
                     # print(line)
-        except Exception as e:
-            print(f"Error: could not fetch file from url: {e}")
-            raise e
+        except requests.exceptions.ConnectionError as e:
+            print(f"Could not fetch file from {url}. Using a local copy.")
+            # raise e
 
     if not success:
         with open(path) as fp:
@@ -165,7 +177,7 @@ def parseJSON(url=None, path=None, headers={}):
     return nodes, edges, g
 
 
-def graph2json(nodelist, edgelist, g):
+def graph2json(nodelist, edgelist, g, query_nodes=[]):
     groups = set()
     for node in nodelist:
         groups.add(fetch_group(node['labels']))
@@ -212,7 +224,7 @@ def graph2json(nodelist, edgelist, g):
         elif elt == 'Reaction':
             groups_json[elt] = {'shape': 'circle',
                                 'color': {'background': 'RoyalBlue'},
-                                'font':  {'color': "White" }}
+                                'font':  {'color': "White"}}
 
         else:
             groups_json[elt] = {'shape': 'box',
@@ -238,11 +250,17 @@ def graph2json(nodelist, edgelist, g):
                     'additional_information': attrs.get('additional_information', ''),
                     'gmm_description': attrs.get('gmm_description', ''),
                     'external_links': ', '.join(attrs.get('_external_links', '').split(' ')),
-                    'reaction_type':attrs.get('reaction_type', '')}
+                    'reaction_type': attrs.get('reaction_type', '')}
         for atr in attrs:
             if atr.endswith('_homologues'):
                 nodeData['_homologues'] = ', '.join(attrs[atr])
                 nodeData['_homologues_prefix'] = atr.split('_')[0]
+
+        if nodeid in query_nodes:
+            nodeData['color'] = {'border': 'red',
+                                 'highlight': {'border': 'red'},  # this does not work, bug in vis.js
+                                 'hover': {'border': 'red'}}  # this does not work, bug in vis.js
+            nodeData['borderWidth'] = 2
         nlist.append(nodeData)
 
     elist = []
@@ -261,6 +279,7 @@ def fetch_group(labels):
 
     # just in case
     return labels[0]
+
 
 def get_autocomplete_node_data(g):
     data = []

@@ -50,15 +50,6 @@ def node_data():
 def draw_network():
     return pss.full_json
 
-# @app.route('/get_network_g6', methods=['GET', 'POST'])
-# def draw_network_g6():
-#     return {} #pss_g6
-
-# @app.route('/full')
-# @cross_origin()
-# def draw_full():
-#     return full_json
-#
 
 @bp.route('/search', methods=['GET', 'POST'])
 def search():
@@ -69,7 +60,20 @@ def search():
         return {'error': 'Invalid query data'}
 
     subgraph = utils.extract_shortest_paths(pss._graph, query_nodes, ignoreDirection=True)
+    return utils.graph2json(pss._n, pss._e, subgraph, query_nodes=query_nodes)
+
+
+@bp.route('/expand', methods=['GET', 'POST'])
+def expand():
+    try:
+        data = request.get_json(force=False)
+        query_nodes = set(data.get('nodes'))
+    except Exception as e:
+        return {'error': 'Invalid query data'}
+
+    subgraph = utils.expand_nodes(pss._graph, list(query_nodes))
     return utils.graph2json(pss._n, pss._e, subgraph)
+
 
 @bp.route('/')
 @cross_origin()
@@ -89,14 +93,21 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     CORS(app)
 
-    app.config.from_mapping(
-        # Flask Session settings
-        SESSION_TYPE = 'redis',
-        SESSION_REDIS = redis.Redis(host='redis', port=6379)
-    )
+    rport = 6379
+    rs = redis.Redis(host='redis', port=rport)
+    try:
+        rs.ping()
+    except redis.exceptions.ConnectionError:
+        print(f'Warning: Redis is not running on port {rport}. Not using this setting.')
+    else:
+        app.config.from_mapping(
+            # Flask Session settings
+            SESSION_TYPE = 'redis',
+            SESSION_REDIS = redis.Redis(host='redis', port=rport)
+        )
     sess.init_app(app)
-
     app.register_blueprint(bp)
+
     return app
 
 app = create_app()
