@@ -46,7 +46,7 @@ $( document ).ready(function() {
             let nodeName = v.truncate(node.name, 25);
             let description = node.description.length>0 ? '<small><strong>description: </strong>{}</small>'.format(node.description) : "";
             let synonyms = node.synonyms.length>0 ? '<small><strong>synonyms: </strong>{}</small>'.format(node.synonyms) : "";
-            let add_info = node.additional_information.length>0 ? '<small><strong>add. info: </strong>{}</small>'.format(node.additional_information) : "";
+            let add_info = node.evidence_sentence.length>0 ? '<small><strong>add. info: </strong>{}</small>'.format(node.evidence_sentence) : "";
             let node_id = '<small style="font-size:0px;"><strong>id: </strong><div class="node_id">{}</div></small>'.format(node.id);
 
             let list_item = '<a href="#" class="list-group-item list-group-item-action">\
@@ -80,7 +80,7 @@ $( document ).ready(function() {
         valueField: "id",
         labelField: "name",
         sortField: "name",
-        searchField: ['name', 'synonyms', 'description', 'additional_information'],
+        searchField: ['name', 'synonyms', 'description', 'evidence_sentence'],
         highlight: false,
         render: {
         //   item: function (item, escape) {
@@ -91,14 +91,14 @@ $( document ).ready(function() {
             let name = '<span class="name"> {} </span>'.format(v.truncate(escape(item.name), maxlen));
             let description = item.description.length>0 ? '<span class="caption"> <strong>description:</strong> {} </span>'.format(v.truncate(escape(item.description), maxlen - 'description:'.length)) : "";
             let synonyms = item.synonyms.length>0 ? '<span class="caption"> <strong>synonyms:</strong> {} </span>'.format(v.truncate(escape(item.synonyms), maxlen - 'synonyms:'.length)) : "";
-            let additional_information = item.additional_information.length>0 ? '<span class="caption"> <strong>add. info:</strong> {} </span>'.format(v.truncate(escape(item.additional_information), maxlen - 'add. info:'.length)) : "";
+            let evidence_sentence = item.evidence_sentence.length>0 ? '<span class="caption"> <strong>add. info:</strong> {} </span>'.format(v.truncate(escape(item.evidence_sentence), maxlen - 'add. info:'.length)) : "";
 
             return '<div>\
             {}\
             {}\
             {}\
             {}\
-            </div>'.format(name, description, synonyms, additional_information);
+            </div>'.format(name, description, synonyms, evidence_sentence);
           },
         }
     });
@@ -291,7 +291,7 @@ function postprocess_node(item) {
                 ['Synonyms', v.truncate(item.synonyms, maxlen)],
                 ['{}_homologues'.format(item._homologues_prefix), v.truncate(item._homologues, maxlen)],
                 ['GoMapMan</br>description', v.truncate(item.gmm_description, maxlen)],
-                ['Add. info', v.truncate(item.additional_information, maxlen)],
+                ['Evidence', v.truncate(item.evidence_sentence, maxlen)],
                 ['External links:', item.external_links]];
 
     let table = '';
