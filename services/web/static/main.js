@@ -46,7 +46,7 @@ $( document ).ready(function() {
             let nodeName = v.truncate(node.name, 25);
             let description = node.description.length>0 ? '<small><strong>description: </strong>{}</small>'.format(node.description) : "";
             let synonyms = node.synonyms.length>0 ? '<small><strong>synonyms: </strong>{}</small>'.format(node.synonyms) : "";
-            let add_info = node.evidence_sentence.length>0 ? '<small><strong>add. info: </strong>{}</small>'.format(node.evidence_sentence) : "";
+            let evidence_sentence = node.evidence_sentence.length>0 ? '<small><strong>evidence: </strong>{}</small>'.format(node.evidence_sentence) : "";
             let node_id = '<small style="font-size:0px;"><strong>id: </strong><div class="node_id">{}</div></small>'.format(node.id);
 
             let list_item = '<a href="#" class="list-group-item list-group-item-action">\
@@ -58,7 +58,7 @@ $( document ).ready(function() {
                 {}\
                 {}\
                 {}\
-                </a>'.format(nodeName, description, synonyms, add_info, node_id);
+                </a>'.format(nodeName, description, synonyms, evidence_sentence, node_id);
 
          $('#queryList').append(list_item);
          // scroll to bottom
@@ -91,7 +91,7 @@ $( document ).ready(function() {
             let name = '<span class="name"> {} </span>'.format(v.truncate(escape(item.name), maxlen));
             let description = item.description.length>0 ? '<span class="caption"> <strong>description:</strong> {} </span>'.format(v.truncate(escape(item.description), maxlen - 'description:'.length)) : "";
             let synonyms = item.synonyms.length>0 ? '<span class="caption"> <strong>synonyms:</strong> {} </span>'.format(v.truncate(escape(item.synonyms), maxlen - 'synonyms:'.length)) : "";
-            let evidence_sentence = item.evidence_sentence.length>0 ? '<span class="caption"> <strong>add. info:</strong> {} </span>'.format(v.truncate(escape(item.evidence_sentence), maxlen - 'add. info:'.length)) : "";
+            let evidence_sentence = item.evidence_sentence.length>0 ? '<span class="caption"> <strong>evidence:</strong> {} </span>'.format(v.truncate(escape(item.evidence_sentence), maxlen - 'evidence:'.length)) : "";
 
             return '<div>\
             {}\
