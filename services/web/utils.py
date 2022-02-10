@@ -164,7 +164,7 @@ def parseJSON(url=None, path=None, headers={}):
         # g.add_node(node['id'], name=node['properties']['name'], labels=node['labels'])
         node['properties']['name'] = decode_htmlentities(node['properties']['name'])
         node['properties']['description'] = decode_htmlentities(node['properties'].get('description', ''))
-        node['properties']['additional_information'] = decode_htmlentities(node['properties'].get('additional_information', ''))
+        node['properties']['evidence_sentence'] = decode_htmlentities(node['properties'].get('evidence_sentence', ''))
         g.add_node(node['id'], labels=node['labels'], **node['properties'])
     for edge in edges:
         # if edge['start']['id'] not in g.nodes:
@@ -247,7 +247,7 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
                     'group': fetch_group(attrs['labels']),
                     'description': attrs.get('description', ''),
                     'synonyms': ', '.join(attrs.get('synonyms', [])),
-                    'additional_information': attrs.get('additional_information', ''),
+                    'evidence_sentence': attrs.get('evidence_sentence', ''),
                     'gmm_description': attrs.get('gmm_description', ''),
                     'external_links': ', '.join(attrs.get('_external_links', '').split(' ')),
                     'reaction_type': attrs.get('reaction_type', '')}
@@ -285,7 +285,7 @@ def get_autocomplete_node_data(g):
     data = []
     for nodeid, attrs in g.nodes(data=True):
         elt = {'id': nodeid}
-        for atr in ['name', 'synonyms', 'description', 'additional_information'] + [f'{sp}_homologues' for sp in SPECIES]:
+        for atr in ['name', 'synonyms', 'description', 'evidence_sentence'] + [f'{sp}_homologues' for sp in SPECIES]:
             elt[atr] = attrs.get(atr, '')
         elt['synonyms'] = ', '.join(elt['synonyms'])
         data.append(elt)
