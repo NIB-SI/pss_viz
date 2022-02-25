@@ -179,7 +179,7 @@ function drawNetwork(graphdata){
                     interaction: {hover: true,
                                   navigationButtons: true,
                                   multiselect: true,
-                                  tooltipDelay: 3600000,  // effectively disabled by very long delay
+                                  tooltipDelay: $("#showTooltipsCbox").prop("checked") ? 200 : 3600000,  // effectively disabled by very long delay if unchecked
                                 },
                     edges: {
                         arrows: 'to',
