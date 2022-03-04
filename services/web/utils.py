@@ -63,7 +63,18 @@ def expand_nodes(g, nodes):
         print('Error : expand not implemented for more than one node')
     node = nodes[0]
     ug = nx.Graph(g.copy())
-    return g.subgraph([node] + list(ug.neighbors(node)))
+
+    # find also neighbours on the second level to connect to the rest of the graph (if possible)
+    all_neighbours = set(nodes)
+    fromnodes = nodes
+    for i in range(2):
+        neighbours = set(itertools.chain.from_iterable([g.neighbors(node) for node in fromnodes]))  # - set(fromnodes)
+        if not neighbours:
+            break
+        all_neighbours.update(neighbours)
+        fromnodes = neighbours
+    potentialEdges = g.subgraph(all_neighbours).edges(data=True)
+    return g.subgraph([node] + list(ug.neighbors(node))), potentialEdges
 
 
 def extract_subgraph(g, nodes, k=2, ignoreDirection=False):

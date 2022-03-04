@@ -179,7 +179,7 @@ function drawNetwork(graphdata){
                     interaction: {hover: true,
                                   navigationButtons: true,
                                   multiselect: true,
-                                  tooltipDelay: 3600000,  // effectively disabled by very long delay
+                                  tooltipDelay: $("#showTooltipsCbox").prop("checked") ? 200 : 3600000,  // effectively disabled by very long delay if unchecked
                                 },
                     edges: {
                         arrows: 'to',
@@ -358,6 +358,25 @@ function formatNodeInfoVex(nid) {
     return netviz.nodes.get(nid).title;
 }
 
+function edge_present(edges, newEdge) {
+    var is_present = false;
+    var BreakException = {};
+
+    try {
+        edges.forEach((oldEdge, i) => {
+            if (newEdge.from == oldEdge.from &&
+                newEdge.to == oldEdge.to &&
+                newEdge.label == oldEdge.label) {
+                    is_present = true;
+                    throw BreakException; // break is not available in forEach
+                }
+        })
+    } catch (e) {
+        if (e !== BreakException) throw e;
+    }
+    return is_present;
+}
+
 function expandNode(nid) {
     $.ajax({
       url: "/biomine/expand",
@@ -382,24 +401,24 @@ function expandNode(nid) {
                       // console.log('Already present ' + item.id + item.label)
                   }
               })
-              if (newCounter==0) {
-                  vex.dialog.alert('No new nodes can be added.');
-                  return;
-              }
 
               data.network.edges.forEach((newEdge, i) => {
-                  let mustAdd = true;
-                  netviz.edges.forEach((oldEdge, i) => {
-                      if (newEdge.from == oldEdge.from &&
-                          newEdge.to == oldEdge.to &&
-                          newEdge.label == oldEdge.label) {
-                              mustAdd = false;
-                      }
-                  })
-                  if (mustAdd) {
+                  if(!edge_present(netviz.edges, newEdge)) {
                       netviz.edges.add(newEdge);
+                      newCounter += 1;
                   }
               })
+
+              data.network.potential_edges.forEach((edge, i) => {
+                  if(!edge_present(netviz.edges, edge)) {
+                      netviz.edges.add(edge);
+                      newCounter += 1;
+                  }
+              })
+
+              if (newCounter==0) {
+                  vex.dialog.alert('No nodes or edges can be added.');
+              }
           }
       },
       error: function( jqXhr, textStatus, errorThrown ){
