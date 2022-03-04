@@ -83,8 +83,19 @@ def create_app(test_config=None):
         except Exception as e:
             return {'error': 'Invalid query data'}
 
-        subgraph = utils.expand_nodes(pss._graph, list(query_nodes))
-        return utils.graph2json(pss._n, pss._e, subgraph)
+        # potential edges are on the second level and may link to the existing graph
+        subgraph, potentialEdges = utils.expand_nodes(pss._graph, list(query_nodes))
+
+        # write potential edges in JSON
+        elist = []
+        for fr, to, attrs in potentialEdges:
+            elist.append({'from': fr,
+                          'to': to,
+                          'label': attrs['label'].replace('_', ' ')})
+
+        json_data = utils.graph2json(pss._n, pss._e, subgraph)
+        json_data['network']['potential_edges'] = elist
+        return json_data
 
     @app.route('/')
     @cross_origin()
