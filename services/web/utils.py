@@ -244,7 +244,7 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
     nlist = []
     for nodeid, attrs in g.nodes(data=True):
         label = attrs['name']
-        label_parts = [x for x in re.split('(\[.+\])', label) if x.strip()]
+        label_parts = [x for x in re.split(r'(\[.+\])', label) if x.strip()]
         if len(label_parts) == 1:
             label = label_parts[0]
         elif len(label_parts) == 2:
@@ -262,10 +262,12 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
                     'gmm_description': attrs.get('gmm_description', ''),
                     'external_links': ', '.join(attrs.get('_external_links', '').split(' ')),
                     'reaction_type': attrs.get('reaction_type', '')}
-        for atr in attrs:
-            if atr.endswith('_homologues'):
-                nodeData['_homologues'] = ', '.join(attrs[atr])
-                nodeData['_homologues_prefix'] = atr.split('_')[0]
+
+        nodeData['_homologues'] = {}
+        for sp in SPECIES:
+            key = f'{sp}_homologues'
+            if key in attrs:
+                nodeData['_homologues'][sp] = ', '.join(attrs[key])
 
         if nodeid in query_nodes:
             nodeData['color'] = {'border': 'red',
