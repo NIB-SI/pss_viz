@@ -174,6 +174,7 @@ def parseJSON(url=None, path=None, headers={}):
     for node in nodes:
         # g.add_node(node['id'], name=node['properties']['name'], labels=node['labels'])
         node['properties']['name'] = decode_htmlentities(node['properties']['name'])
+        node['properties']['functional_cluster_id'] = node['properties'].get('functional_cluster_id', '')
         node['properties']['description'] = decode_htmlentities(node['properties'].get('description', ''))
         node['properties']['evidence_sentence'] = decode_htmlentities(node['properties'].get('evidence_sentence', ''))
         g.add_node(node['id'], labels=node['labels'], **node['properties'])
@@ -260,8 +261,9 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
                     'synonyms': ', '.join(attrs.get('synonyms', [])),
                     'evidence_sentence': attrs.get('evidence_sentence', ''),
                     'gmm_description': attrs.get('gmm_description', ''),
-                    'external_links': ', '.join(attrs.get('_external_links', '').split(' ')),
-                    'reaction_type': attrs.get('reaction_type', '')}
+                    'external_links': ', '.join(attrs.get('external_links', '')),
+                    'reaction_type': attrs.get('reaction_type', ''),
+                    'functional_cluster_id': attrs.get('functional_cluster_id', '')}
 
         nodeData['_homologues'] = {}
         for sp in SPECIES:
@@ -298,7 +300,7 @@ def get_autocomplete_node_data(g):
     data = []
     for nodeid, attrs in g.nodes(data=True):
         elt = {'id': nodeid}
-        for atr in ['name', 'synonyms', 'description', 'evidence_sentence'] + [f'{sp}_homologues' for sp in SPECIES]:
+        for atr in ['name', 'synonyms', 'description', 'evidence_sentence', 'functional_cluster_id'] + [f'{sp}_homologues' for sp in SPECIES]:
             elt[atr] = attrs.get(atr, '')
         elt['synonyms'] = ', '.join(elt['synonyms'])
         data.append(elt)
