@@ -336,7 +336,7 @@ function postprocess_edges(edges) {
 
 function postprocess_node(item) {
     let maxlen = 100;
-    let header = '<table class="table table-striped table-bordered tooltip_table">\
+    let header = '<table class="table table-striped table-bordered tooltip_table w-100" style="table-layout: fixed;">\
                   <tbody>';
     let footer = '</tbody>\
                   </table>';
@@ -364,7 +364,7 @@ function postprocess_node(item) {
         if (item[1].length>0) {
             let row = '<tr>\
                             <td><strong>{}</strong></td>\
-                            <td class="text-wrap">{}</td>\
+                            <td class="text-wrap" style="width: 100%; display: inline-block; word-wrap: break-word; ">{}</td>\
                        </tr>'.format(item[0], item[1]);
             table += row;
         }
@@ -389,7 +389,7 @@ function htmlTitle(html) {
 }
 
 function scale() {
-    $('#networkView').height(verge.viewportH()-40);
+    $('#networkView').height(verge.viewportH()-60);
     $('#networkView').width($('#networkViewContainer').width());
 }
 
