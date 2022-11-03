@@ -18,6 +18,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/voca/1.4.0/voca.min.js" integrity="sha512-yrLbujQF3UPLrlaavtewYmv7OFD8AGO5PS8jg0VKlXP8kW9POHaG/bbpwSbpkqe4SCXVwTtYAMsKdOukT11bxQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/string-format/0.5.0/string-format.min.js" integrity="sha512-umUQjNj1rAebq5zbgyU2sFNEREC48ohuUAdAwTa1qbEibzzbTnJLhj8ASNNsoKkWQ3ef+QjtZvGgVWJulLetxQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.4/dist/FileSaver.min.js"></script>
+
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/vex-js/4.1.0/css/vex.min.css" rel="stylesheet" type="text/css" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/vex-js/4.1.0/css/vex-theme-default.min.css" rel="stylesheet" type="text/css" />
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vex-js/4.1.0/js/vex.combined.min.js"></script>
@@ -125,10 +128,39 @@
                 </div> -->
 
                 <label for="queryList" class="form-label">Your query</label>
-                  <div class="list-group" id="queryList">
-                  </div>
+                <div class="list-group" id="queryList">
+                </div>
 
 
+
+                <div class="container mb-3 me-0 pe-0 ps-0 pe-0">
+
+                    <div class="row justify-content-between">
+                      <div class="col-6">
+
+
+                        <div class="dropdown float-start ps-0">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="saveAsButton" data-bs-toggle="dropdown" aria-expanded="false">
+                            export
+                        </button>
+                        <ul class="dropdown-menu" id="saveAsDropdown" aria-labelledby="saveAsButton">
+                             <a class="dropdown-item" href="#nodes">nodes (.csv format)</a>
+                             <a class="dropdown-item" href="#edges">edges (.csv format)</a>
+                        </ul>
+                        </div>
+
+                      </div>
+
+                      <div class="col-6">
+                          <div class="pe-0">
+                            <button type="button" class="btn btn-primary float-end" id="searchButton">search</button>
+                          </div>
+                      </div>
+
+                   </div>
+                </div>
+
+<!--
                   <div class="container mb-3 me-0 pe-0">
                     <div class="row">
                       <div class="col-md-6 offset-md-6 me-0">
@@ -136,6 +168,12 @@
                       </div>
                     </div>
                   </div>
+-->
+
+
+
+
+
 
                   <!-- <div class="container mb-3 me-0 pe-0">
                     <div class="row">
