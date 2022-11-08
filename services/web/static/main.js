@@ -1,6 +1,19 @@
 // prevents dialog closing immediately when page navigates
 vex.defaultOptions.closeAllOnPopState = false;
 
+
+SPECIES = [
+    "ath",
+    "osa",
+    "stu",
+    "sly",
+    "nta",
+    "ptr",
+    "vvi",
+]
+
+
+
 var netviz = {
     nodes: undefined,
     edges: undefined,
@@ -355,7 +368,7 @@ function postprocess_node(item) {
                   <tbody>';
     let footer = '</tbody>\
                   </table>';
-    let data = [['Name', item.label],
+    let data = [['Name', item.name],
                 ['Group', item.group],
                 ['Reaction type', item.reaction_type],
                 ['FunctionalCluster id', item.functional_cluster_id],
@@ -638,31 +651,37 @@ function format_cell(s){
     return s;
 }
 
-
-
 function export_nodes() {
     if(netviz.nodes==undefined) {
         vex.dialog.alert('No nodes to export! You need to do a search first.');
         return;
     }
 
-    // for (let sp in item._homologues) {
-    //     s = v.truncate(item._homologues[sp], maxlen)
-    //     data.push(['{}_homologues'.format(sp), s])
-    // }
+    var header = ['id', 'label','group','description','synonyms','evidence sentence','external links','reaction type', 'functional_cluster_id'];
 
+    SPECIES.forEach(function(sp){
+        header.push('{}_homologues'.format(sp))
+    })
 
-    var data = [['id', 'label','group','description','synonyms','evidence sentence','external links','reaction type', 'functional_cluster_id', 'homologues']];
+    var data = [header];
     netviz.nodes.forEach(function(node, id){
         var line = new Array;
 
-        ['id', 'label','group','description','synonyms','evidence_sentence', 'external_links','reaction_type', 'functional_cluster_id', '_homologues'].forEach(function(aname){
+        ['id', 'label','group','description','synonyms','evidence_sentence', 'external_links','reaction_type', 'functional_cluster_id'].forEach(function(aname){
             let atr = node[aname];
             if (atr != undefined)
                 line.push(format_cell(atr));
             else
                 line.push('');
         })
+        SPECIES.forEach(function(sp){
+            let atr = node['_homologues'][sp];
+            if (atr != undefined)
+                line.push(format_cell(atr));
+            else
+                line.push('');
+        })
+        console.log(line)
         data.push(line);
     })
 
