@@ -1,3 +1,6 @@
+// prevents dialog closing immediately when page navigates
+vex.defaultOptions.closeAllOnPopState = false;
+
 var netviz = {
     nodes: undefined,
     edges: undefined,
@@ -92,7 +95,7 @@ $( document ).ready(function() {
           option: function (item, escape) {
             let maxlen = 50;
             let name = '<span class="name"> {} </span>'.format(v.truncate(escape(item.name), maxlen));
-           let functional_cluster_id = item.functional_cluster_id.length>0 ? '<small><strong>fc identifier: </strong>{}</small>'.format(item.functional_cluster_id) : "";
+            let functional_cluster_id = item.functional_cluster_id.length>0 ? '<small><strong>fc identifier: </strong>{}</small>'.format(item.functional_cluster_id) : "";
             let description = item.description.length>0 ? '<span class="caption"> <strong>description:</strong> {} </span>'.format(v.truncate(escape(item.description), maxlen - 'description:'.length)) : "";
             let synonyms = item.synonyms.length>0 ? '<span class="caption"> <strong>synonyms:</strong> {} </span>'.format(v.truncate(escape(item.synonyms), maxlen - 'synonyms:'.length)) : "";
             let evidence_sentence = item.evidence_sentence.length>0 ? '<span class="caption"> <strong>evidence:</strong> {} </span>'.format(v.truncate(escape(item.evidence_sentence), maxlen - 'evidence:'.length)) : "";
@@ -215,6 +218,18 @@ $( document ).ready(function() {
         }
     }
     $('#searchButton').click();
+
+
+
+    $('#saveAsDropdown a').click(function(){
+        if ($(this).attr('href') == '#nodes') {
+            export_nodes();
+        }
+        else if ($(this).attr('href') == '#edges') {
+            export_edges();
+        }
+    });
+
 });
 
 
@@ -346,7 +361,6 @@ function postprocess_node(item) {
                 ['FunctionalCluster id', item.functional_cluster_id],
                 ['Description', v.truncate(item.description, maxlen)],
                 ['Synonyms', v.truncate(item.synonyms, maxlen)],
-                ['GoMapMan</br>description', v.truncate(item.gmm_description, maxlen)],
                 ['Evidence', v.truncate(item.evidence_sentence, maxlen)],
                 ['External links:', item.external_links]];
 
@@ -389,7 +403,7 @@ function htmlTitle(html) {
 }
 
 function scale() {
-    $('#networkView').height(verge.viewportH()-60);
+    $('#networkView').height(verge.viewportH()-80);
     $('#networkView').width($('#networkViewContainer').width());
 }
 
@@ -612,3 +626,87 @@ function initContextMenus() {
         });
 
 }
+
+
+function format_cell(s){
+    s = s.toString();
+    s = s.trim();
+    s = s.replace('\n', '');
+    if (s[0]!='"' && s.slice(-1)!='"' && s.search(',')!=-1){
+        s = '"' + s + '"';
+    }
+    return s;
+}
+
+
+
+function export_nodes() {
+    if(netviz.nodes==undefined) {
+        vex.dialog.alert('No nodes to export! You need to do a search first.');
+        return;
+    }
+
+    // for (let sp in item._homologues) {
+    //     s = v.truncate(item._homologues[sp], maxlen)
+    //     data.push(['{}_homologues'.format(sp), s])
+    // }
+
+
+    var data = [['id', 'label','group','description','synonyms','evidence sentence','external links','reaction type', 'functional_cluster_id', 'homologues']];
+    netviz.nodes.forEach(function(node, id){
+        var line = new Array;
+
+        ['id', 'label','group','description','synonyms','evidence_sentence', 'external_links','reaction_type', 'functional_cluster_id', '_homologues'].forEach(function(aname){
+            let atr = node[aname];
+            if (atr != undefined)
+                line.push(format_cell(atr));
+            else
+                line.push('');
+        })
+        data.push(line);
+    })
+
+    var datalines = new Array;
+    data.forEach(function(line_elements){
+        datalines.push(line_elements.join(','));
+    })
+    var csv = datalines.join('\n')
+
+    var blob = new Blob([csv], {type: "text/csv;charset=utf-8"});
+    saveAs(blob, "nodes.csv");
+}
+
+
+
+function export_edges(){
+    if(netviz.edges==undefined) {
+        vex.dialog.alert('No edges to export! You need to do a search first.');
+        return;
+    }
+
+
+    var data = [['from','to','label']];
+    netviz.edges.forEach(function(edge, id){
+        var line = new Array;
+
+        ['from','to','label'].forEach(function(aname){
+            let atr = edge[aname];
+            if (atr != undefined)
+                line.push(format_cell(atr));
+            else
+                line.push('');
+        })
+
+        data.push(line);
+    })
+
+    var datalines = new Array;
+    data.forEach(function(line_elements){
+        datalines.push(line_elements.join(','));
+    })
+    var csv = datalines.join('\n');
+
+    var blob = new Blob([csv], {type: "text/csv;charset=utf-8"});
+    saveAs(blob, "edges.csv");
+}
+

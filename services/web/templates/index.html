@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 
-{% block title %}SKM - PSS explorer{% endblock %}
+{% block title %}PSS explorer{% endblock %}
 
 {% block page_title %}PSS explorer{% endblock %}
 
 {% block description %}
-<p>
-Use the search-box to find entities (including reactions) in PSS and add them to the query box. <br>
-<button type="button" class="py-0  btn btn-outline-info btn-xs inline" data-toggle="popover" data-bs-content='
+  <p>
+    Use the search-box to find entities (including reactions) in PSS and add them to the query box.
+    <button type="button" class="py-0  btn btn-outline-info btn-xs inline" data-toggle="popover" data-bs-content='
    <div style="width:100%;">
 
     <p  class="card-text">
@@ -30,18 +30,18 @@ Use the search-box to find entities (including reactions) in PSS and add them to
 
    <p> Note that the shortest path does not take into account the direction of the edges and does not extract the complete reactions.
   </div>' data-bs-html="true" title="Help">
-  More
-</button></p>
+      More
+    </button>
+  </p>
 {% endblock %}
 
 {% block search_interface %}
-
   <div class="mb-3">
     <div id="searchSelectWrapper">
-        <label for="queryInput" class="form-label">Search PSS</label>
+      <label for="queryInput" class="form-label">Search PSS</label>
     </div>
     <div id="myModal">
-        <select id="queryInput" class="select_items"></select>
+      <select id="queryInput" class="select_items"></select>
     </div>
     <div class="row">
       <div class="col-md-8 offset-md-4 me-0">
@@ -53,11 +53,28 @@ Use the search-box to find entities (including reactions) in PSS and add them to
   <label for="queryList" class="form-label">Your query</label>
   <div class="list-group" id="queryList"></div>
 
+  <div class="container mb-3 me-0 pe-0 ps-0 pe-0">
+    <div class="row justify-content-between">
+      <div class="col-6">
 
-    <div class="container mb-3 me-0 pe-0">
-      <div class="row me-0">
-          <button type="button" class="btn btn-primary" id="searchButton">search</button>
+        <div class="dropdown float-start ps-0">
+          <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="saveAsButton" data-bs-toggle="dropdown" aria-expanded="false">
+            export
+          </button>
+          <ul class="dropdown-menu" id="saveAsDropdown" aria-labelledby="saveAsButton">
+            <a class="dropdown-item" href="#nodes">nodes (.csv format)</a>
+            <a class="dropdown-item" href="#edges">edges (.csv format)</a>
+          </ul>
+        </div>
+
       </div>
-    </div>
 
+      <div class="col-6">
+        <div class="pe-0">
+          <button type="button" class="btn btn-primary float-end" id="searchButton">search</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
 {% endblock %}

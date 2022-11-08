@@ -260,7 +260,6 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
                     'description': attrs.get('description', ''),
                     'synonyms': ', '.join(attrs.get('synonyms', [])),
                     'evidence_sentence': attrs.get('evidence_sentence', ''),
-                    'gmm_description': attrs.get('gmm_description', ''),
                     'external_links': ', '.join(attrs.get('external_links', '')),
                     'reaction_type': attrs.get('reaction_type', ''),
                     'functional_cluster_id': attrs.get('functional_cluster_id', '')}
