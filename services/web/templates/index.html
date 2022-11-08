@@ -18,6 +18,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/voca/1.4.0/voca.min.js" integrity="sha512-yrLbujQF3UPLrlaavtewYmv7OFD8AGO5PS8jg0VKlXP8kW9POHaG/bbpwSbpkqe4SCXVwTtYAMsKdOukT11bxQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/string-format/0.5.0/string-format.min.js" integrity="sha512-umUQjNj1rAebq5zbgyU2sFNEREC48ohuUAdAwTa1qbEibzzbTnJLhj8ASNNsoKkWQ3ef+QjtZvGgVWJulLetxQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.4/dist/FileSaver.min.js"></script>
+
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/vex-js/4.1.0/css/vex.min.css" rel="stylesheet" type="text/css" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/vex-js/4.1.0/css/vex-theme-default.min.css" rel="stylesheet" type="text/css" />
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vex-js/4.1.0/js/vex.combined.min.js"></script>
@@ -37,7 +40,8 @@
   </head>
   <body>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<!--     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script> -->
+    <script src="{{ url_for('static', filename='vis-network.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/verge@1.10.2/verge.min.js"></script>
 
 
@@ -49,7 +53,7 @@
         </div>
 
         <div class="row">
-          <div class="col-3 border-end border-light border-2" id="configColumn">
+          <div class="col-lg-3 col-sm-5 border-end border-light border-2" id="configColumn">
             <div class="card m-1">
               <div class="card-body">
               <h1 class="card-title"> PSS explorer </h1>
@@ -125,10 +129,39 @@
                 </div> -->
 
                 <label for="queryList" class="form-label">Your query</label>
-                  <div class="list-group" id="queryList">
-                  </div>
+                <div class="list-group" id="queryList">
+                </div>
 
 
+
+                <div class="container mb-3 me-0 pe-0 ps-0 pe-0">
+
+                    <div class="row justify-content-between">
+                      <div class="col-6">
+
+
+                        <div class="dropdown float-start ps-0">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="saveAsButton" data-bs-toggle="dropdown" aria-expanded="false">
+                            export
+                        </button>
+                        <ul class="dropdown-menu" id="saveAsDropdown" aria-labelledby="saveAsButton">
+                             <a class="dropdown-item" href="#nodes">nodes (.csv format)</a>
+                             <a class="dropdown-item" href="#edges">edges (.csv format)</a>
+                        </ul>
+                        </div>
+
+                      </div>
+
+                      <div class="col-6">
+                          <div class="pe-0">
+                            <button type="button" class="btn btn-primary float-end" id="searchButton">search</button>
+                          </div>
+                      </div>
+
+                   </div>
+                </div>
+
+<!--
                   <div class="container mb-3 me-0 pe-0">
                     <div class="row">
                       <div class="col-md-6 offset-md-6 me-0">
@@ -136,6 +169,12 @@
                       </div>
                     </div>
                   </div>
+-->
+
+
+
+
+
 
                   <!-- <div class="container mb-3 me-0 pe-0">
                     <div class="row">
@@ -149,7 +188,7 @@
 
           </div>
 
-          <div class="col-9" id="networkViewContainer">
+          <div class="col-lg-9 col-sm-7" id="networkViewContainer">
               <div id="networkView"></div>
           </div>
 
