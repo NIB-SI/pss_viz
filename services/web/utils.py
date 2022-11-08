@@ -236,7 +236,8 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
         elif elt == 'Reaction':
             groups_json[elt] = {'shape': 'circle',
                                 'color': {'background': 'RoyalBlue'},
-                                'font':  {'color': "White"}}
+                                'font':  {'color': "White"},
+                                'widthConstraint': 80}
 
         else:
             groups_json[elt] = {'shape': 'box',
@@ -244,6 +245,19 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
 
     nlist = []
     for nodeid, attrs in g.nodes(data=True):
+        group = fetch_group(attrs['labels'])
+
+
+        nodeData = {'id': nodeid,
+                    'name': attrs['name'],
+                    'group': group,
+                    'description': attrs.get('description', ''),
+                    'synonyms': ', '.join(attrs.get('synonyms', [])),
+                    'evidence_sentence': attrs.get('evidence_sentence', ''),
+                    'external_links': ', '.join(attrs.get('external_links', '')),
+                    'reaction_type': attrs.get('reaction_type', ''),
+                    'functional_cluster_id': attrs.get('functional_cluster_id', '')}
+
         label = attrs['name']
         label_parts = [x for x in re.split(r'(\[.+\])', label) if x.strip()]
         if len(label_parts) == 1:
@@ -254,15 +268,11 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
         else:
             print('Warning: strangely formatted label: ', label)
 
-        nodeData = {'id': nodeid,
-                    'label': label,
-                    'group': fetch_group(attrs['labels']),
-                    'description': attrs.get('description', ''),
-                    'synonyms': ', '.join(attrs.get('synonyms', [])),
-                    'evidence_sentence': attrs.get('evidence_sentence', ''),
-                    'external_links': ', '.join(attrs.get('external_links', '')),
-                    'reaction_type': attrs.get('reaction_type', ''),
-                    'functional_cluster_id': attrs.get('functional_cluster_id', '')}
+        if group == "Reaction":
+            nodeData['label'] = f"{label}\n{attrs.get('reaction_type', '')}"
+
+        else:
+            nodeData['label'] = label
 
         nodeData['_homologues'] = {}
         for sp in SPECIES:
@@ -271,7 +281,8 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
                 nodeData['_homologues'][sp] = ', '.join(attrs[key])
 
         if nodeid in query_nodes:
-            nodeData['color'] = {'border': 'red',
+            nodeData['color'] = {'background': groups_json[group]['color']['background'],
+                                 'border': 'red',
                                  'highlight': {'border': 'red'},  # this does not work, bug in vis.js
                                  'hover': {'border': 'red'}}  # this does not work, bug in vis.js
             nodeData['borderWidth'] = 2
@@ -307,6 +318,6 @@ def get_autocomplete_node_data(g):
 
 
 if __name__ == '__main__':
-    ns, es, g = parseJSON('data/PSS-latest.json')
+    ns, es, g = parseJSON('data/PSS-reactions.json')
     j = graph2json(ns, es, g)
     nd = get_autocomplete_node_data(g)
