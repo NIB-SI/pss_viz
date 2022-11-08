@@ -287,12 +287,21 @@ function postprocess_node(item) {
     let data = [['Name', item.label],
                 ['Group', item.group],
                 ['Reaction type', item.reaction_type],
+                ['FunctionalCluster id', item.functional_cluster_id],
                 ['Description', v.truncate(item.description, maxlen)],
                 ['Synonyms', v.truncate(item.synonyms, maxlen)],
-                ['{}_homologues'.format(item._homologues_prefix), v.truncate(item._homologues, maxlen)],
-                ['GoMapMan</br>description', v.truncate(item.gmm_description, maxlen)],
                 ['Evidence', v.truncate(item.evidence_sentence, maxlen)],
                 ['External links:', item.external_links]];
+
+    for (let sp in item._homologues) {
+        s = v.truncate(item._homologues[sp], maxlen)
+        if (sp=="ath") {
+            params = jQuery.param({list:item._homologues[sp]})
+            s += '<p><a target="_blank" href="https://knetminer.com/araknet/genepage?{}">Search for {}_homologues in KnetMiner</a></p>'.format(params, sp)
+        }
+        data.push(['{}_homologues'.format(sp), s])
+    }
+
 
     let table = '';
     data.forEach(function (item, index) {

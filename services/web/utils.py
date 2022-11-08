@@ -259,13 +259,15 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
                     'description': attrs.get('description', ''),
                     'synonyms': ', '.join(attrs.get('synonyms', [])),
                     'evidence_sentence': attrs.get('evidence_sentence', ''),
-                    'gmm_description': attrs.get('gmm_description', ''),
-                    'external_links': ', '.join(attrs.get('_external_links', '').split(' ')),
-                    'reaction_type': attrs.get('reaction_type', '')}
-        for atr in attrs:
-            if atr.endswith('_homologues'):
-                nodeData['_homologues'] = ', '.join(attrs[atr])
-                nodeData['_homologues_prefix'] = atr.split('_')[0]
+                    'external_links': ', '.join(attrs.get('external_links', '')),
+                    'reaction_type': attrs.get('reaction_type', ''),
+                    'functional_cluster_id': attrs.get('functional_cluster_id', '')}
+
+        nodeData['_homologues'] = {}
+        for sp in SPECIES:
+            key = f'{sp}_homologues'
+            if key in attrs:
+                nodeData['_homologues'][sp] = ', '.join(attrs[key])
 
         if nodeid in query_nodes:
             nodeData['color'] = {'border': 'red',
