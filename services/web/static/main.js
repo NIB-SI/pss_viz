@@ -1,3 +1,6 @@
+// prevents dialog closing immediately when page navigates
+vex.defaultOptions.closeAllOnPopState = false;
+
 var netviz = {
     nodes: undefined,
     edges: undefined,
@@ -20,6 +23,7 @@ $(window).resize(function() {
 });
 
 $( document ).ready(function() {
+
     $.ajax({
       url: "/get_node_data",
       async: false,
@@ -44,6 +48,7 @@ $( document ).ready(function() {
         selected_values.forEach(function (item, index) {
             let node = node_search_data_dict[item];
             let nodeName = v.truncate(node.name, 25);
+            let functional_cluster_id = node.functional_cluster_id.length>0 ? '<small><strong>fc identifier: </strong>{}</small>'.format(node.functional_cluster_id) : "";
             let description = node.description.length>0 ? '<small><strong>description: </strong>{}</small>'.format(node.description) : "";
             let synonyms = node.synonyms.length>0 ? '<small><strong>synonyms: </strong>{}</small>'.format(node.synonyms) : "";
             let evidence_sentence = node.evidence_sentence.length>0 ? '<small><strong>evidence: </strong>{}</small>'.format(node.evidence_sentence) : "";
@@ -58,7 +63,8 @@ $( document ).ready(function() {
                 {}\
                 {}\
                 {}\
-                </a>'.format(nodeName, description, synonyms, evidence_sentence, node_id);
+                {}\
+                </a>'.format(nodeName, functional_cluster_id, description, synonyms, evidence_sentence, node_id);
 
          $('#queryList').append(list_item);
          // scroll to bottom
@@ -80,7 +86,7 @@ $( document ).ready(function() {
         valueField: "id",
         labelField: "name",
         sortField: "name",
-        searchField: ['name', 'synonyms', 'description', 'evidence_sentence'],
+        searchField: ['name', 'synonyms', 'description', 'evidence_sentence', 'functional_cluster_id'],
         highlight: false,
         render: {
         //   item: function (item, escape) {
@@ -89,6 +95,7 @@ $( document ).ready(function() {
           option: function (item, escape) {
             let maxlen = 50;
             let name = '<span class="name"> {} </span>'.format(v.truncate(escape(item.name), maxlen));
+            let functional_cluster_id = item.functional_cluster_id.length>0 ? '<small><strong>fc identifier: </strong>{}</small>'.format(item.functional_cluster_id) : "";
             let description = item.description.length>0 ? '<span class="caption"> <strong>description:</strong> {} </span>'.format(v.truncate(escape(item.description), maxlen - 'description:'.length)) : "";
             let synonyms = item.synonyms.length>0 ? '<span class="caption"> <strong>synonyms:</strong> {} </span>'.format(v.truncate(escape(item.synonyms), maxlen - 'synonyms:'.length)) : "";
             let evidence_sentence = item.evidence_sentence.length>0 ? '<span class="caption"> <strong>evidence:</strong> {} </span>'.format(v.truncate(escape(item.evidence_sentence), maxlen - 'evidence:'.length)) : "";
@@ -98,7 +105,8 @@ $( document ).ready(function() {
             {}\
             {}\
             {}\
-            </div>'.format(name, description, synonyms, evidence_sentence);
+            {}\
+            </div>'.format(name, functional_cluster_id, description, synonyms, evidence_sentence);
           },
         }
     });
@@ -158,6 +166,60 @@ $( document ).ready(function() {
 
     scale();
     initContextMenus();
+
+    urlParams = new URLSearchParams(window.location.search);
+    reaction_list = urlParams.getAll('reaction_id');
+    console.log(reaction_list);
+    functional_cluster_list = urlParams.getAll('functional_cluster_id');
+    console.log(functional_cluster_list);
+
+    if(reaction_list.length>0){
+        console.log("here")
+        for (var i = reaction_list.length - 1; i >= 0; i--) {
+            rx = reaction_list[i]
+            console.log(rx);
+
+            var j = -1
+            for (let x of node_search_data) {
+               if (x.name == rx){
+                console.log(x.id);
+                j = x.id;
+                break;
+               }
+            }
+            if (j == -1){
+                alert(rx + ' is not a valid reaction_id' )
+            } else {
+                select[0].selectize.addItem(j);
+                $('#add2selected').click()
+            }
+        }
+    }
+    if(functional_cluster_list.length>0){
+        console.log("here")
+        for (var i = functional_cluster_list.length - 1; i >= 0; i--) {
+            fc = functional_cluster_list[i]
+            console.log(fc);
+
+            var j = -1
+            for (let x of node_search_data) {
+               if (x.functional_cluster_id == fc){
+                console.log(x.id);
+                j = x.id;
+                break;
+               }
+            }
+            if (j == -1){
+                alert(fc + ' is not a valid functional_cluster_id' )
+            } else {
+                select[0].selectize.addItem(j);
+                $('#add2selected').click()
+            }
+        }
+    }
+    $('#searchButton').click();
+
+
 
     $('#saveAsDropdown a').click(function(){
         if ($(this).attr('href') == '#nodes') {
@@ -261,7 +323,6 @@ function drawNetwork(graphdata){
     //    });
 }
 
-
 function hover_edge_label(values, id, selected, hovering) {
   values.mod = 'normal';
 }
@@ -291,7 +352,7 @@ function postprocess_edges(edges) {
 
 function postprocess_node(item) {
     let maxlen = 100;
-    let header = '<table class="table table-striped table-bordered tooltip_table">\
+    let header = '<table class="table table-striped table-bordered tooltip_table w-100" style="table-layout: fixed;">\
                   <tbody>';
     let footer = '</tbody>\
                   </table>';
@@ -313,13 +374,12 @@ function postprocess_node(item) {
         data.push(['{}_homologues'.format(sp), s])
     }
 
-
     let table = '';
     data.forEach(function (item, index) {
         if (item[1].length>0) {
             let row = '<tr>\
                             <td><strong>{}</strong></td>\
-                            <td class="text-wrap">{}</td>\
+                            <td class="text-wrap" style="width: 100%; display: inline-block; word-wrap: break-word; ">{}</td>\
                        </tr>'.format(item[0], item[1]);
             table += row;
         }
@@ -344,7 +404,7 @@ function htmlTitle(html) {
 }
 
 function scale() {
-    $('#networkView').height(verge.viewportH()-40);
+    $('#networkView').height(verge.viewportH()-80);
     $('#networkView').width($('#networkViewContainer').width());
 }
 
@@ -587,11 +647,17 @@ function export_nodes() {
         return;
     }
 
-    var data = [['id', 'label','group','description','synonyms','evidence sentence','GoMapMan description','external links','reaction type', 'homologues']];
+    // for (let sp in item._homologues) {
+    //     s = v.truncate(item._homologues[sp], maxlen)
+    //     data.push(['{}_homologues'.format(sp), s])
+    // }
+
+
+    var data = [['id', 'label','group','description','synonyms','evidence sentence','external links','reaction type', 'functional_cluster_id', 'homologues']];
     netviz.nodes.forEach(function(node, id){
         var line = new Array;
 
-        ['id', 'label','group','description','synonyms','evidence_sentence','gmm_description','external_links','reaction_type', '_homologues'].forEach(function(aname){
+        ['id', 'label','group','description','synonyms','evidence_sentence', 'external_links','reaction_type', 'functional_cluster_id', '_homologues'].forEach(function(aname){
             let atr = node[aname];
             if (atr != undefined)
                 line.push(format_cell(atr));

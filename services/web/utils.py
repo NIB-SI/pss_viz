@@ -174,6 +174,7 @@ def parseJSON(url=None, path=None, headers={}):
     for node in nodes:
         # g.add_node(node['id'], name=node['properties']['name'], labels=node['labels'])
         node['properties']['name'] = decode_htmlentities(node['properties']['name'])
+        node['properties']['functional_cluster_id'] = node['properties'].get('functional_cluster_id', '')
         node['properties']['description'] = decode_htmlentities(node['properties'].get('description', ''))
         node['properties']['evidence_sentence'] = decode_htmlentities(node['properties'].get('evidence_sentence', ''))
         g.add_node(node['id'], labels=node['labels'], **node['properties'])
@@ -244,7 +245,7 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
     nlist = []
     for nodeid, attrs in g.nodes(data=True):
         label = attrs['name']
-        label_parts = [x for x in re.split('(\[.+\])', label) if x.strip()]
+        label_parts = [x for x in re.split(r'(\[.+\])', label) if x.strip()]
         if len(label_parts) == 1:
             label = label_parts[0]
         elif len(label_parts) == 2:
@@ -298,7 +299,7 @@ def get_autocomplete_node_data(g):
     data = []
     for nodeid, attrs in g.nodes(data=True):
         elt = {'id': nodeid}
-        for atr in ['name', 'synonyms', 'description', 'evidence_sentence'] + [f'{sp}_homologues' for sp in SPECIES]:
+        for atr in ['name', 'synonyms', 'description', 'evidence_sentence', 'functional_cluster_id'] + [f'{sp}_homologues' for sp in SPECIES]:
             elt[atr] = attrs.get(atr, '')
         elt['synonyms'] = ', '.join(elt['synonyms'])
         data.append(elt)
