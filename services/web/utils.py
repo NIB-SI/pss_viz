@@ -23,6 +23,43 @@ SPECIES = [
 ]
 
 
+EDGE_STYLE = {
+    'ACTIVATES':  {
+        'color': {'color': "#008040" },
+        'arrows': {'to': {'enabled': True, 'type': 'circle'}}
+    },
+    'INHIBITS': {
+        'color': {'color': "#cd0000" },
+        'arrows': {'to': {'enabled': True, 'type': 'bar'}}
+    },
+    'SUBSTRATE': {
+        'color': {'color': "#1a1a1a" },
+        'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
+    },
+    'TRANSLOCATE_FROM': {
+        'color': {'color': "#5d5d5d" },
+        'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
+    },
+    'PRODUCT': {
+        'color': {'color': "#1a1a1a" },
+        'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
+    },
+    'TRANSLOCATE_TO': {
+        'color': {'color': "#5d5d5d" },
+        'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
+    },
+}
+
+def edge_style(edge_type):
+    return {
+        'label': edge_type.replace('_', ' '),
+        'color': EDGE_STYLE[edge_type]['color'],
+        'arrows': EDGE_STYLE[edge_type]['arrows']
+    }
+
+
+
+
 # taken from gensim.utils
 def decode_htmlentities(text):
     def safe_unichr(intval):
@@ -294,43 +331,18 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
             nodeData['borderWidth'] = 2
         nlist.append(nodeData)
 
-    edge_style = {
-        'ACTIVATES':  {
-            'color': {'color': "#008040" },
-            'arrows': {'to': {'enabled': True, 'type': 'circle'}}
-        },
-        'INHIBITS': {
-            'color': {'color': "#cd0000" },
-            'arrows': {'to': {'enabled': True, 'type': 'bar'}}
-        },
-        'SUBSTRATE': {
-            'color': {'color': "#1a1a1a" },
-            'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
-        },
-        'TRANSLOCATE_FROM': {
-            'color': {'color': "#5d5d5d" },
-            'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
-        },
-        'PRODUCT': {
-            'color': {'color': "#1a1a1a" },
-            'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
-        },
-        'TRANSLOCATE_TO': {
-            'color': {'color': "#5d5d5d" },
-            'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
-        },
-    }
+
 
     elist = []
     for fr, to, attrs in g.edges(data=True):
-        label = attrs['label']
-        elist.append({'from': fr,
-                      'to': to,
-                      'label': label.replace('_', ' '),
-                      'color': edge_style[label]['color'],
-                      'arrows': edge_style[label]['arrows']
-                      })
+        edge_type = attrs['label']
+        d = edge_style(edge_type)
+        d['from'] = fr
+        d['to'] = to
+        elist.append(d)
     return {'network': {'nodes': nlist, 'edges': elist}, 'groups': groups_json}
+
+
 
 
 def fetch_group(labels):

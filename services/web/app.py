@@ -77,9 +77,11 @@ def expand():
     # write potential edges in JSON
     elist = []
     for fr, to, attrs in potentialEdges:
-        elist.append({'from': fr,
-                      'to': to,
-                      'label': attrs['label'].replace('_', ' ')})
+        edge_type = attrs['label']
+        d = utils.edge_style(edge_type)
+        d['from'] = fr
+        d['to'] = to
+        elist.append(d)
 
     json_data = utils.graph2json(pss._n, pss._e, subgraph)
     json_data['network']['potential_edges'] = elist
