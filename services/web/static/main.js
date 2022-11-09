@@ -288,8 +288,9 @@ function drawNetwork(graphdata){
                         },
                     nodes: {
                         shape: 'box',
+                        margin: 10,
                         color: '#9BDBFF',
-                        widthConstraint: { maximum: 100},
+                        widthConstraint: { maximum: 180},
                         font: {
                             multi: 'html'
                         },

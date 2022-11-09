@@ -200,7 +200,7 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
                                 'color': {'background': 'AliceBlue'}}
         # plant genes -- shades of green
         elif elt == 'PlantCoding':
-            groups_json[elt] = {'shape': 'box',
+            groups_json[elt] = {'shape': 'circle',
                                 'color': {'background': 'MediumAquaMarine'}}
         elif elt == 'PlantNonCoding':
             groups_json[elt] = {'shape': 'box',
@@ -222,6 +222,10 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
         elif elt == 'ForeignEntity':
             groups_json[elt] = {'shape': 'box',
                                 'color': {'background': 'Peru'}}
+        elif elt == 'ForeignAbiotic':
+            groups_json[elt] = {'shape': 'box',
+                                'color': {'background': '#cd3f40'}}
+
 
         # every one else
         elif elt == 'Metabolite':
@@ -230,14 +234,16 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
 
         elif elt == 'Process':
             groups_json[elt] = {'shape': 'box',
-                                'color': {'background': 'PapayaWhip'}}
+                                'color': {'background': '#c4bcff'}}
 
         # "other" type of node
         elif elt == 'Reaction':
-            groups_json[elt] = {'shape': 'circle',
+            groups_json[elt] = {'shape': 'box',
+                                'margin':5,
                                 'color': {'background': 'RoyalBlue'},
-                                'font':  {'color': "White"},
-                                'widthConstraint': 80}
+                                'font':  {'color': "White",
+                                          'multi': 'html'},
+                                'widthConstraint': 85}
 
         else:
             groups_json[elt] = {'shape': 'box',
@@ -269,7 +275,7 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
             print('Warning: strangely formatted label: ', label)
 
         if group == "Reaction":
-            nodeData['label'] = f"{label}\n{attrs.get('reaction_type', '')}"
+            nodeData['label'] = f"<b>{label}</b>\n{attrs.get('reaction_type', '')}"
 
         else:
             nodeData['label'] = label
@@ -288,11 +294,42 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
             nodeData['borderWidth'] = 2
         nlist.append(nodeData)
 
+    edge_style = {
+        'ACTIVATES':  {
+            'color': {'color': "#008040" },
+            'arrows': {'to': {'enabled': True, 'type': 'circle'}}
+        },
+        'INHIBITS': {
+            'color': {'color': "#cd0000" },
+            'arrows': {'to': {'enabled': True, 'type': 'bar'}}
+        },
+        'SUBSTRATE': {
+            'color': {'color': "#1a1a1a" },
+            'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
+        },
+        'TRANSLOCATE_FROM': {
+            'color': {'color': "#5d5d5d" },
+            'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
+        },
+        'PRODUCT': {
+            'color': {'color': "#1a1a1a" },
+            'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
+        },
+        'TRANSLOCATE_TO': {
+            'color': {'color': "#5d5d5d" },
+            'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
+        },
+    }
+
     elist = []
     for fr, to, attrs in g.edges(data=True):
+        label = attrs['label']
         elist.append({'from': fr,
                       'to': to,
-                      'label': attrs['label'].replace('_', ' ')})
+                      'label': label.replace('_', ' '),
+                      'color': edge_style[label]['color'],
+                      'arrows': edge_style[label]['arrows']
+                      })
     return {'network': {'nodes': nlist, 'edges': elist}, 'groups': groups_json}
 
 
