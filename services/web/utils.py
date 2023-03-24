@@ -48,15 +48,26 @@ EDGE_STYLE = {
         'color': {'color': "#5d5d5d" },
         'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
     },
+    'OTHER': {
+        'color': {'color': "#000000" },
+        'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
+    },
 }
 
 def edge_style(edge_type):
-    return {
-        'label': edge_type.replace('_', ' '),
-        'color': EDGE_STYLE[edge_type]['color'],
-        'arrows': EDGE_STYLE[edge_type]['arrows']
-    }
 
+    if edge_type in EDGE_STYLE:
+        return {
+            'label': edge_type.replace('_', ' '),
+            'color': EDGE_STYLE[edge_type]['color'],
+            'arrows': EDGE_STYLE[edge_type]['arrows']
+        }
+    else:
+        return {
+            'label': edge_type.replace('_', ' '),
+            'color': EDGE_STYLE["OTHER"]['color'],
+            'arrows': EDGE_STYLE["OTHER"]['arrows']
+        }
 
 
 
@@ -99,7 +110,7 @@ def expand_nodes(g, nodes):
     if len(nodes) > 1:
         print('Error : expand not implemented for more than one node')
     node = nodes[0]
-    ug = nx.Graph(g.copy())
+    ug = nx.Graph(g)
 
     # find also neighbours on the second level to connect to the rest of the graph (if possible)
     all_neighbours = set(nodes)
@@ -110,15 +121,24 @@ def expand_nodes(g, nodes):
             break
         all_neighbours.update(neighbours)
         fromnodes = neighbours
+
+    reaction_expanded_nodes = reaction_expansion(g, all_neighbours)
+
+    print("before", len(all_neighbours))
+    all_neighbours.update(reaction_expanded_nodes)
+    print("after", len(all_neighbours))
+
+
     potentialEdges = g.subgraph(all_neighbours).edges(data=True)
-    return g.subgraph([node] + list(ug.neighbors(node))), potentialEdges
+    # return g.subgraph([node] + list(ug.neighbors(node))), potentialEdges
+    return g.subgraph(all_neighbours), potentialEdges
 
 
 def extract_subgraph(g, nodes, k=2, ignoreDirection=False):
     nodes = [node for node in nodes if node in g.nodes]
 
     if ignoreDirection:
-        g = nx.Graph(g.copy())
+        g = nx.Graph(g)
     all_neighbours = set(nodes)
     fromnodes = nodes
     for i in range(k):
@@ -129,6 +149,19 @@ def extract_subgraph(g, nodes, k=2, ignoreDirection=False):
         fromnodes = neighbours
     result = g.subgraph(all_neighbours).copy()
     return result
+
+def reaction_expansion(g, nodes, ignoreDirection=True):
+    reactions_to_expand_on = []
+    for n in nodes:
+        if 'Reaction' in g.nodes[n]['labels']:
+            reactions_to_expand_on.append(n)
+
+    print("reaction to expand", len(reactions_to_expand_on))
+
+    expanded_nodes = extract_subgraph(g, reactions_to_expand_on, k=1, ignoreDirection=ignoreDirection).nodes()
+    print("reactions expanded", len(expanded_nodes))
+
+    return expanded_nodes
 
 
 def extract_shortest_paths(g, query_nodes, ignoreDirection=True):
@@ -157,6 +190,11 @@ def extract_shortest_paths(g, query_nodes, ignoreDirection=True):
         # add back also nodes with no paths
         # this also covers the case with no paths at all
         paths_nodes = set(paths_nodes).union(query_nodes)
+        reaction_expanded_nodes = reaction_expansion(g, paths_nodes)
+
+        # print("before", len(paths_nodes))
+        paths_nodes.update(reaction_expanded_nodes)
+        # print("after", len(paths_nodes))
 
     return g.subgraph(paths_nodes).copy()
 
@@ -297,7 +335,8 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
                     'description': attrs.get('description', ''),
                     'synonyms': ', '.join(attrs.get('synonyms', [])),
                     'evidence_sentence': attrs.get('evidence_sentence', ''),
-                    'external_links': ', '.join(attrs.get('external_links', '')),
+                    # 'external_links': ', '.join(attrs.get('external_links', '')),
+                    'external_links': attrs.get('external_links', []),
                     'reaction_type': attrs.get('reaction_type', ''),
                     'functional_cluster_id': attrs.get('functional_cluster_id', '')}
 
@@ -329,6 +368,8 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
                                  'highlight': {'border': 'red'},  # this does not work, bug in vis.js
                                  'hover': {'border': 'red'}}  # this does not work, bug in vis.js
             nodeData['borderWidth'] = 2
+
+
         nlist.append(nodeData)
 
 
@@ -340,6 +381,7 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
         d['from'] = fr
         d['to'] = to
         elist.append(d)
+
     return {'network': {'nodes': nlist, 'edges': elist}, 'groups': groups_json}
 
 

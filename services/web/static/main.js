@@ -182,20 +182,17 @@ $( document ).ready(function() {
 
     urlParams = new URLSearchParams(window.location.search);
     reaction_list = urlParams.getAll('reaction_id');
-    console.log(reaction_list);
+    // console.log(reaction_list);
     functional_cluster_list = urlParams.getAll('functional_cluster_id');
-    console.log(functional_cluster_list);
+    // console.log(functional_cluster_list);
 
     if(reaction_list.length>0){
-        console.log("here")
         for (var i = reaction_list.length - 1; i >= 0; i--) {
             rx = reaction_list[i]
-            console.log(rx);
 
             var j = -1
             for (let x of node_search_data) {
                if (x.name == rx){
-                console.log(x.id);
                 j = x.id;
                 break;
                }
@@ -209,15 +206,12 @@ $( document ).ready(function() {
         }
     }
     if(functional_cluster_list.length>0){
-        console.log("here")
         for (var i = functional_cluster_list.length - 1; i >= 0; i--) {
             fc = functional_cluster_list[i]
-            console.log(fc);
 
             var j = -1
             for (let x of node_search_data) {
                if (x.functional_cluster_id == fc){
-                console.log(x.id);
                 j = x.id;
                 break;
                }
@@ -240,6 +234,9 @@ $( document ).ready(function() {
         }
         else if ($(this).attr('href') == '#edges') {
             export_edges();
+        }
+        else if ($(this).attr('href') == '#png') {
+            export_png();
         }
     });
 
@@ -376,7 +373,21 @@ function postprocess_node(item) {
                 ['Description', v.truncate(item.description, maxlen)],
                 ['Synonyms', v.truncate(item.synonyms, maxlen)],
                 ['Evidence', v.truncate(item.evidence_sentence, maxlen)],
-                ['External links:', item.external_links]];
+                // ['External links:', item.external_links]
+                ];
+
+    external_links = [];
+    for (let x of item.external_links) {
+        var [source, identifier] = x.split(":")
+        if (source=="doi") {
+            s = '<a target="_blank" href="https://doi.org/{}">{}</a>'.format(identifier, x)
+        } else {
+            s = '{}'.format(x)
+        }
+        external_links.push(s)
+    }
+    data.push(['External links', external_links.join("<br>")])
+
 
     for (let sp in item._homologues) {
         s = v.truncate(item._homologues[sp], maxlen)
@@ -729,4 +740,19 @@ function export_edges(){
     var blob = new Blob([csv], {type: "text/csv;charset=utf-8"});
     saveAs(blob, "edges.csv");
 }
+
+
+function export_png(){
+    if(netviz.nodes==undefined) {
+        vex.dialog.alert('No image to export! You need to do a search first.');
+        return;
+    }
+
+    const ctx = netviz.network.canvas.getContext()
+    const dataURL = ctx.canvas.toDataURL('image/png');
+
+    saveAs(dataURL, "network.png");
+
+}
+
 
