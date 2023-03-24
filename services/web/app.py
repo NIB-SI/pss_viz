@@ -92,13 +92,15 @@ def expand():
 def main():
     if '_user_id' in session:
         headers = headers={'Userid':session['_user_id']}
+        logged_in = True
     else:
+        logged_in = False
         headers = {}
 
     # refresh pss
     pss.load(headers=headers)
 
-    return render_template('index.html')
+    return render_template('index.html', logged_in=logged_in)
 
 def create_app(test_config=None):
     # create and configure the app

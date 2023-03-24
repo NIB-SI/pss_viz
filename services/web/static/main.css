@@ -82,7 +82,34 @@
     font-size: 1em !important;
     /* line-height: 1.5em !important; */
     font-family: var(--bs-font-sans-serif) !important;
+}
 
+
+.navbar{ /*navbar is same width as content */
+  width: 100%;
+  margin-left: auto;
+  margin-right: 10%;
+  background: #00672c;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  z-index: 99;
+  height: 40px;
+}
+
+.nav-link, .nav-link:focus{
+  color: floralwhite;
+  background-color: #00672c;
+}
+
+.nav-link:hover  {
+  color: black;
+  background-color: #ddd;
+}
+
+.navbar-default .nav-link  {
+  padding-top: 0em;
+  padding-bottom: 0em;
 }
 
 /* page footer --------------------------------- */
