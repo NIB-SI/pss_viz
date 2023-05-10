@@ -12,7 +12,10 @@ SPECIES = [
     "vvi",
 ]
 
-
+NODE_ANNOT_DATA = ['id', 'name', 'short_name', 'label', 'group','description','synonyms','evidence_sentence','external_links','reaction_type', 'functional_cluster_id', 'reaction_id'];
+SPECIES.forEach(function(sp){
+    NODE_ANNOT_DATA.push(`${sp}_homologues`)
+})
 
 var netviz = {
     nodes: undefined,
@@ -22,7 +25,6 @@ var netviz = {
     newNodes: undefined,
     newEdges: undefined
 };
-
 
 // var network = null;
 var node_search_data = null;
@@ -241,8 +243,13 @@ $( document ).ready(function() {
         else if ($(this).attr('href') == '#edges') {
             export_edges();
         }
+        else if ($(this).attr('href') == '#png') {
+            export_png();
+        }
+        else if ($(this).attr('href') == '#json') {
+            export_json();
+        }
     });
-
 
 });
 
@@ -260,75 +267,12 @@ function drawNetwork(graphdata){
          edges: netviz.edges
      };
 
-     // console.log(data);
-     var options = {groups: graphdata.groups,
-                    interaction: {hover: true,
-                                  navigationButtons: true,
-                                  multiselect: true,
-                                  tooltipDelay: $("#showTooltipsCbox").prop("checked") ? 200 : 3600000,  // effectively disabled by very long delay if unchecked
-                                },
-                    edges: {
-                        arrows: 'to',
-                        smooth: {
-                            enabled: true,
-                            // type: 'continuous'
-                            type: 'dynamic',
-                            forceDirection: 'none'
-                        },
-                        font: {
-                            size: 9,
-                            face: 'sans',
-                            align: 'top', //'middle'
-                            color: '#808080'
-                        },
-                        chosen: {
-                            label: hover_edge_label
-                        },
-                        color: {color: 'dimgrey', hover: 'blue'},
-                        hoverWidth: 0.6
-                        },
-                    nodes: {
-                        shape: 'box',
-                        margin: 10,
-                        color: '#9BDBFF',
-                        widthConstraint: { maximum: 180},
-                        font: {
-                            multi: 'html'
-                        },
-                        chosen: {
-                            node: hover_node,
-                            label: hover_node_label
-                        }
-                    },
-                    physics: {
-                        enabled: true,
-                        solver: 'barnesHut',
+    // console.log(data);
+    netviz_options['groups'] = graphdata.groups
 
-                        barnesHut: {
-                            gravitationalConstant: -5000,
-                            centralGravity: 0.5,
-                            springLength: 150,
-                            springConstant: 0.16,
-                            damping: 0.25
-                        },
-                        stabilization: {
-                             enabled: true,
-                             iterations: 10,
-                             fit: true
-                             // updateInterval: 5,
-                         },
-                    },
-                    configure: {
-                        enabled: false
-                    },
-                    layout :{
-                        improvedLayout: true
-                    }
-    };
     postprocess_edges(data.edges);
     postprocess_nodes(data.nodes);
-    // var network = new vis.Network(container, data, options);
-    netviz.network = new vis.Network(container, data, options);
+    netviz.network = new vis.Network(container, data, netviz_options);
     netviz.network.on('dragStart', onDragStart);
     netviz.network.on('dragEnd', onDragEnd);
 
@@ -337,19 +281,6 @@ function drawNetwork(graphdata){
     //    });
 }
 
-function hover_edge_label(values, id, selected, hovering) {
-  values.mod = 'normal';
-}
-
-function hover_node_label(values, id, selected, hovering) {
-  values.mod = 'normal';
-}
-
-function hover_node(values, id, selected, hovering) {
-  values.borderWidth = 2;
-  values.borderColor = 'blue'
-  // values.color = 'blue'
-}
 
 function postprocess_edges(edges) {
     edges.forEach((item, i) => {
@@ -365,6 +296,7 @@ function postprocess_edges(edges) {
 }
 
 function postprocess_node(item) {
+
     let maxlen = 100;
     let header = '<table class="table table-striped table-bordered tooltip_table w-100" style="table-layout: fixed;">\
                   <tbody>';
@@ -377,7 +309,18 @@ function postprocess_node(item) {
                 ['Description', v.truncate(item.description, maxlen)],
                 ['Synonyms', v.truncate(item.synonyms, maxlen)],
                 ['Evidence', v.truncate(item.evidence_sentence, maxlen)],
-                ['External links:', item.external_links]];
+
+    external_links = [];
+    for (let x of item.external_links) {
+        var [source, identifier] = x.split(":")
+        if (source=="doi") {
+            s = '<a target="_blank" href="https://doi.org/{}">{}</a>'.format(identifier, x)
+        } else {
+            s = '{}'.format(x)
+        }
+        external_links.push(s)
+    }
+    data.push(['External links', external_links.join("<br>")])
 
     for (let sp in item._homologues) {
         s = v.truncate(item._homologues[sp], maxlen)
@@ -389,6 +332,7 @@ function postprocess_node(item) {
     }
 
     let table = '';
+
     data.forEach(function (item, index) {
         if (item[1].length>0) {
             let row = '<tr>\
@@ -519,9 +463,7 @@ function expandNode(nid) {
           alert('Server error while loading node data.');
       }
     });
-
 }
-
 
 function initContextMenus() {
     var canvasMenu = {
@@ -641,93 +583,3 @@ function initContextMenus() {
         });
 
 }
-
-
-function format_cell(s){
-    s = s.toString();
-    s = s.trim();
-    s = s.replace('\n', '');
-    if (s[0]!='"' && s.slice(-1)!='"' && s.search(',')!=-1){
-        s = '"' + s + '"';
-    }
-    return s;
-}
-
-function export_nodes() {
-    if(netviz.nodes==undefined) {
-        vex.dialog.alert('No nodes to export! You need to do a search first.');
-        return;
-    }
-
-    var header = ['id', 'label','group','description','synonyms','evidence sentence','external links','reaction type', 'functional_cluster_id'];
-
-    SPECIES.forEach(function(sp){
-        header.push('{}_homologues'.format(sp))
-    })
-
-    var data = [header];
-    netviz.nodes.forEach(function(node, id){
-        var line = new Array;
-
-        ['id', 'label','group','description','synonyms','evidence_sentence', 'external_links','reaction_type', 'functional_cluster_id'].forEach(function(aname){
-            let atr = node[aname];
-            if (atr != undefined)
-                line.push(format_cell(atr));
-            else
-                line.push('');
-        })
-        SPECIES.forEach(function(sp){
-            let atr = node['_homologues'][sp];
-            if (atr != undefined)
-                line.push(format_cell(atr));
-            else
-                line.push('');
-        })
-        console.log(line)
-        data.push(line);
-    })
-
-    var datalines = new Array;
-    data.forEach(function(line_elements){
-        datalines.push(line_elements.join(','));
-    })
-    var csv = datalines.join('\n')
-
-    var blob = new Blob([csv], {type: "text/csv;charset=utf-8"});
-    saveAs(blob, "nodes.csv");
-}
-
-
-
-function export_edges(){
-    if(netviz.edges==undefined) {
-        vex.dialog.alert('No edges to export! You need to do a search first.');
-        return;
-    }
-
-
-    var data = [['from','to','label']];
-    netviz.edges.forEach(function(edge, id){
-        var line = new Array;
-
-        ['from','to','label'].forEach(function(aname){
-            let atr = edge[aname];
-            if (atr != undefined)
-                line.push(format_cell(atr));
-            else
-                line.push('');
-        })
-
-        data.push(line);
-    })
-
-    var datalines = new Array;
-    data.forEach(function(line_elements){
-        datalines.push(line_elements.join(','));
-    })
-    var csv = datalines.join('\n');
-
-    var blob = new Blob([csv], {type: "text/csv;charset=utf-8"});
-    saveAs(blob, "edges.csv");
-}
-
