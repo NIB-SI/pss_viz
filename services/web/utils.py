@@ -118,16 +118,15 @@ NODE_STYLE = {
 }
 
 def edge_style(edge_type):
-    label = edge_type.replace('_', ' '),
     if edge_type in EDGE_STYLE:
         return {
-            'label': label,
+            'label': edge_type.replace('_', ' '),
             'color': EDGE_STYLE[edge_type]['color'],
             'arrows': EDGE_STYLE[edge_type]['arrows']
         }
     else:
         return {
-            'label': label,
+            'label': edge_type.replace('_', ' '),
             'color': EDGE_STYLE["default"]['color'],
             'arrows': EDGE_STYLE["default"]['arrows']
         }
