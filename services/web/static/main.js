@@ -308,7 +308,8 @@ function postprocess_node(item) {
                 ['FunctionalCluster id', item.functional_cluster_id],
                 ['Description', v.truncate(item.description, maxlen)],
                 ['Synonyms', v.truncate(item.synonyms, maxlen)],
-                ['Evidence', v.truncate(item.evidence_sentence, maxlen)],
+                ['Evidence', v.truncate(item.evidence_sentence, maxlen)]
+    ]
 
     external_links = [];
     for (let x of item.external_links) {
