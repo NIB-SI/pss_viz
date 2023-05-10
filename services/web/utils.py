@@ -25,34 +25,98 @@ SPECIES = [
 
 EDGE_STYLE = {
     'ACTIVATES':  {
-        'color': {'color': "#008040" },
-        'arrows': {'to': {'enabled': True, 'type': 'circle'}}
+        'color': {'color': "#008040", 'hover': '#008040'},
+        'arrows': {'to': {'enabled': True, 'type': 'circle'}},
     },
     'INHIBITS': {
-        'color': {'color': "#cd0000" },
+        'color': {'color': "#cd0000", 'hover': '#cd0000'},
         'arrows': {'to': {'enabled': True, 'type': 'bar'}}
     },
     'SUBSTRATE': {
-        'color': {'color': "#1a1a1a" },
+        'color': {'color': "#485056", 'hover': '#485056'},
         'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
     },
     'TRANSLOCATE_FROM': {
-        'color': {'color': "#5d5d5d" },
+        'color': {'color': "#5d5d5d", 'hover': '#49606d'},
         'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
     },
     'PRODUCT': {
-        'color': {'color': "#1a1a1a" },
+        'color': {'color': "#485056", 'hover': '#485056'},
         'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
     },
     'TRANSLOCATE_TO': {
-        'color': {'color': "#5d5d5d" },
+        'color': {'color': "#5d5d5d", 'hover': '#49606d'},
         'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
     },
-    'OTHER': {
-        'color': {'color': "#000000" },
+    'default': {
+        'color': {'color': "#000000", 'hover': '#000000'},
         'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
     },
 }
+
+NODE_STYLE = {
+    'Complex': {
+        'shape': 'box',
+        'color': {'background': '#9cd6e4', 'border': '#40b0cb'}
+    },
+    # plant genes -- shades of green,
+    'PlantCoding': {
+        'shape': 'circle',
+        'color': {'background': '#66CDAA', 'border': '#48c39a'}
+    },
+    'PlantNonCoding': {
+        'shape': 'box',
+        'color': {'background': '#98FB98', 'border': '#057c05'}
+    },
+    'PlantAbstract': {
+        'shape': 'box',
+        'color': {'background': '#3cb371', 'border': '#2d8755'}
+    },
+    # bad guys -- shades of brown/orange,
+    'ForeignCoding': {
+        'shape': 'box',
+        'color': {'background': '#f4a460', 'border': '#ef7a17'}
+    },
+    'ForeignNonCoding': {
+        'shape': 'box',
+        'color': {'background': '#f5deb3', 'border': '#e3a228'}
+    },
+    'ForeignAbstract': {
+        'shape': 'box',
+        'color': {'background': '#bc8f8f', 'border': '#a66a6a'}
+    },
+    'ForeignEntity': {
+        'shape': 'box',
+        'color': {'background': '#cd853f', 'border': '#965e27'}
+    },
+    'ForeignAbiotic': {
+        'shape': 'box',
+        'color': {'background': '#cd3f40', 'border': '#a62b2c'}
+    },
+    # every one else,
+    'Metabolite': {
+        'shape': 'box',
+        'color': {'background': '#fff0f5', 'border': '#ff6799'}
+    },
+    'Process': {
+        'shape': 'box',
+        'color': {'background': '#c4bcff', 'border': '#6e5aff'}
+    },
+    # "other" type of node,
+    'Reaction': {
+        'shape': 'box',
+        'margin':5,
+        'color': {'background': '#4169e1', 'border': '#122a73'},
+        'font':  {'color': "White",
+                  'multi': 'html'},
+        'widthConstraint': 85
+    },
+    'default': {
+        'shape': 'box',
+        'color': {'background': 'White', 'border': '#6c7881'}
+    }
+}
+
 
 def edge_style(edge_type):
 
@@ -65,11 +129,9 @@ def edge_style(edge_type):
     else:
         return {
             'label': edge_type.replace('_', ' '),
-            'color': EDGE_STYLE["OTHER"]['color'],
-            'arrows': EDGE_STYLE["OTHER"]['arrows']
+            'color': EDGE_STYLE["default"]['color'],
+            'arrows': EDGE_STYLE["default"]['arrows']
         }
-
-
 
 # taken from gensim.utils
 def decode_htmlentities(text):
@@ -253,6 +315,7 @@ def parseJSON(url=None, path=None, headers={}):
         node['properties']['description'] = decode_htmlentities(node['properties'].get('description', ''))
         node['properties']['evidence_sentence'] = decode_htmlentities(node['properties'].get('evidence_sentence', ''))
         g.add_node(node['id'], labels=node['labels'], **node['properties'])
+
     for edge in edges:
         # if edge['start']['id'] not in g.nodes:
         #     print('UNKNOWN START NODE: ', edge['start']['id'])
@@ -270,75 +333,22 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
         groups.add(fetch_group(node['labels']))
     groups_json = {}
     for elt in groups:
-        if elt == 'Complex':
-            groups_json[elt] = {'shape': 'box',
-                                'color': {'background': 'AliceBlue'}}
-        # plant genes -- shades of green
-        elif elt == 'PlantCoding':
-            groups_json[elt] = {'shape': 'circle',
-                                'color': {'background': 'MediumAquaMarine'}}
-        elif elt == 'PlantNonCoding':
-            groups_json[elt] = {'shape': 'box',
-                                'color': {'background': 'PaleGreen'}}
-        elif elt == 'PlantAbstract':
-            groups_json[elt] = {'shape': 'box',
-                                'color': {'background': 'MediumSeaGreen'}}
-
-        # bad guys -- shades of brown/orange
-        elif elt == 'ForeignCoding':
-            groups_json[elt] = {'shape': 'box',
-                                'color': {'background': 'SandyBrown'}}
-        elif elt == 'ForeignNonCoding':
-            groups_json[elt] = {'shape': 'box',
-                                'color': {'background': 'Wheat'}}
-        elif elt == 'ForeignAbstract':
-            groups_json[elt] = {'shape': 'box',
-                                'color': {'background': 'RosyBrown'}}
-        elif elt == 'ForeignEntity':
-            groups_json[elt] = {'shape': 'box',
-                                'color': {'background': 'Peru'}}
-        elif elt == 'ForeignAbiotic':
-            groups_json[elt] = {'shape': 'box',
-                                'color': {'background': '#cd3f40'}}
-
-
-        # every one else
-        elif elt == 'Metabolite':
-            groups_json[elt] = {'shape': 'box',
-                                'color': {'background': 'LavenderBlush'}}
-
-        elif elt == 'Process':
-            groups_json[elt] = {'shape': 'box',
-                                'color': {'background': '#c4bcff'}}
-
-        # "other" type of node
-        elif elt == 'Reaction':
-            groups_json[elt] = {'shape': 'box',
-                                'margin':5,
-                                'color': {'background': 'RoyalBlue'},
-                                'font':  {'color': "White",
-                                          'multi': 'html'},
-                                'widthConstraint': 85}
-
+        if elt in NODE_STYLE:
+            groups_json[elt] = NODE_STYLE[elt]
         else:
-            groups_json[elt] = {'shape': 'box',
-                                'color': {'background': 'White'}}
+            groups_json[elt] = NODE_STYLE['default']
 
     nlist = []
     for nodeid, attrs in g.nodes(data=True):
         group = fetch_group(attrs['labels'])
 
+        nodeData = {'id': nodeid, 'name': attrs['name'], 'group': group,}
 
-        nodeData = {'id': nodeid,
-                    'name': attrs['name'],
-                    'group': group,
-                    'description': attrs.get('description', ''),
-                    'synonyms': ', '.join(attrs.get('synonyms', [])),
-                    'evidence_sentence': attrs.get('evidence_sentence', ''),
-                    # 'external_links': ', '.join(attrs.get('external_links', '')),
-                    'external_links': attrs.get('external_links', []),
-                    'reaction_type': attrs.get('reaction_type', ''),
-                    'functional_cluster_id': attrs.get('functional_cluster_id', '')}
+        for atr in ['name', 'short_name', 'description', 'evidence sentence', 'reaction_type', 'functional_cluster_id', 'reaction_id']:
+            nodeData[atr] = attrs.get(atr, '')
+
+        for atr in ['synonyms', 'external_links']:
+            nodeData[atr] = attrs.get(atr, [])
 
         label = attrs['name']
         label_parts = [x for x in re.split(r'(\[.+\])', label) if x.strip()]
@@ -369,10 +379,7 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
                                  'hover': {'border': 'red'}}  # this does not work, bug in vis.js
             nodeData['borderWidth'] = 2
 
-
         nlist.append(nodeData)
-
-
 
     elist = []
     for fr, to, attrs in g.edges(data=True):
@@ -384,9 +391,6 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
 
     return {'network': {'nodes': nlist, 'edges': elist}, 'groups': groups_json}
 
-
-
-
 def fetch_group(labels):
     index_labels = ['Family', 'Plant', 'Foreign', 'Node', 'FunctionalCluster']
     for x in labels:
@@ -395,7 +399,6 @@ def fetch_group(labels):
 
     # just in case
     return labels[0]
-
 
 def get_autocomplete_node_data(g):
     data = []
@@ -406,7 +409,6 @@ def get_autocomplete_node_data(g):
         elt['synonyms'] = ', '.join(elt['synonyms'])
         data.append(elt)
     return {'node_data': data}
-
 
 if __name__ == '__main__':
     ns, es, g = parseJSON('data/PSS-reactions.json')

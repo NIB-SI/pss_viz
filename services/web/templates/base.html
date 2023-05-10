@@ -27,23 +27,25 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.min.js" integrity="sha512-kvg/Lknti7OoAw0GqMBP8B+7cGHvp4M9O9V6nAYG91FZVDMW3Xkkq5qrdMhrXiawahqU7IZ5CNsY/wWy1PpGTQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.css" integrity="sha512-EF5k2tHv4ShZB7zESroCVlbLaZq2n8t1i8mr32tgX0cyoHc3GfxuP7IoT8w/pD+vyoq7ye//qkFEqQao7Ofrag==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-    <link rel="shortcut icon" href="{{ url_for('bp.static', filename='favicon.ico') }}">
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-    <script src="{{ url_for('bp.static', filename='vis-network.min.js') }}"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/verge@1.10.2/verge.min.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.4/dist/FileSaver.min.js"></script>
 
+    <script src="{{ url_for('bp.static', filename='vis-network.min.js') }}"></script>
+    <link rel="shortcut icon" href="{{ url_for('bp.static', filename='favicon.ico') }}">
     <link href="{{ url_for('bp.static', filename='main.css') }}" rel="stylesheet" />
+    <script src="{{ url_for('bp.static', filename='netviz_options.js') }}"></script>
     <script src="{{ url_for('bp.static', filename='main.js') }}"></script>
-
+    <script src="{{ url_for('bp.static', filename='exports.js') }}"></script>
+    <script src="{{ url_for('bp.static', filename='netviz_options.js') }}"></script>
     {% block head %}{% endblock %}
+
     <title>SKM -
       {% block title %}{% endblock %}
     </title>
+
   </head>
+
   <body>
 
     <nav class="navbar navbar-default navbar-expand sticky-top">
