@@ -172,7 +172,7 @@ def expand_nodes(g, nodes):
     if len(nodes) > 1:
         print('Error : expand not implemented for more than one node')
     node = nodes[0]
-    ug = nx.Graph(g)
+    # ug = nx.Graph(g)
 
     # find also neighbours on the second level to connect to the rest of the graph (if possible)
     all_neighbours = set(nodes)
@@ -186,10 +186,7 @@ def expand_nodes(g, nodes):
 
     reaction_expanded_nodes = reaction_expansion(g, all_neighbours)
 
-    print("before", len(all_neighbours))
     all_neighbours.update(reaction_expanded_nodes)
-    print("after", len(all_neighbours))
-
 
     potentialEdges = g.subgraph(all_neighbours).edges(data=True)
     # return g.subgraph([node] + list(ug.neighbors(node))), potentialEdges
@@ -271,7 +268,7 @@ def parseJSON(url=None, path=None, headers={}):
 
     nodes = []
     edges = []
-    g = nx.DiGraph()
+    g = nx.Graph()
 
     if not (path or url):
         raise Exception("ERROR: at least path or url")
