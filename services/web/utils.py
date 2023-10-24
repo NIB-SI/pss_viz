@@ -172,7 +172,7 @@ def expand_nodes(g, nodes):
     if len(nodes) > 1:
         print('Error : expand not implemented for more than one node')
     node = nodes[0]
-    # ug = nx.Graph(g)
+    g = nx.Graph(g)
 
     # find also neighbours on the second level to connect to the rest of the graph (if possible)
     all_neighbours = set(nodes)
@@ -193,7 +193,7 @@ def expand_nodes(g, nodes):
     return g.subgraph(all_neighbours), potentialEdges
 
 
-def extract_subgraph(g, nodes, k=2, ignoreDirection=False):
+def extract_subgraph(g, nodes, k=2, ignoreDirection=True):
     nodes = [node for node in nodes if node in g.nodes]
 
     if ignoreDirection:
@@ -264,11 +264,15 @@ def extract_shortest_paths(g, query_nodes, ignoreDirection=True):
 #     subprocess.call(['dot', '-T{}'.format(output), dotfile, '-o', '{}.{}'.format(path, output)])  # , cwd=outdir)
 
 def parseJSON(url=None, path=None, headers={}):
-    '''Try url first, if failed, fall back to path'''
+    '''Try url first, if failed, fall back to path
+
+    Graph is directed (for orientation of edges in viz), but needs to be
+    undirected in any queries.
+    '''
 
     nodes = []
     edges = []
-    g = nx.Graph()
+    g = nx.DiGraph()
 
     if not (path or url):
         raise Exception("ERROR: at least path or url")
