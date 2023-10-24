@@ -345,7 +345,7 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
 
         nodeData = {'id': nodeid, 'name': attrs['name'], 'group': group,}
 
-        for atr in ['name', 'short_name', 'description', 'evidence sentence', 'reaction_type', 'functional_cluster_id', 'reaction_id']:
+        for atr in ['name', 'short_name', 'description', 'evidence_sentence', 'reaction_type', 'functional_cluster_id', 'reaction_id']:
             nodeData[atr] = attrs.get(atr, '')
 
         for atr in ['synonyms', 'external_links']:
