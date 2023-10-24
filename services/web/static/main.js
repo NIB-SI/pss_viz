@@ -288,7 +288,7 @@ function postprocess_edges(edges) {
 
 function postprocess_node(item) {
 
-    let maxlen = 100;
+    let maxlen = 150;
     let header = '<table class="table table-striped table-bordered tooltip_table w-100" style="table-layout: fixed;">\
                   <tbody>';
     let footer = '</tbody>\
@@ -299,7 +299,7 @@ function postprocess_node(item) {
                 ['FunctionalCluster id', item.functional_cluster_id],
                 ['Description', v.truncate(item.description, maxlen)],
                 ['Synonyms', v.truncate(item.synonyms, maxlen)],
-                ['Evidence', v.truncate(item.evidence_sentence, maxlen)],
+                ['Evidence', v.truncate(item.evidence_sentence, maxlen)]
     ]
 
     external_links = [];
@@ -315,10 +315,20 @@ function postprocess_node(item) {
     data.push(['External links', external_links.join("<br>")])
 
     for (let sp in item._homologues) {
-        s = v.truncate(item._homologues[sp], maxlen)
+        // s = v.truncate(item._homologues[sp], maxlen)
         if (sp=="ath") {
+            hrefs = []
+            console.log(item._homologues[sp])
+            item._homologues[sp].split(", ").forEach(function (item, index) {
+                console.log(item)
+                hrefs.push('<a target="_blank" href="https://www.arabidopsis.org/servlets/TairObject?name={}&type=locus">{}</a>  '.format(item, item))
+            })
+            s = hrefs.join(", ")
+
             params = jQuery.param({list:item._homologues[sp]})
-            s += '<p><a target="_blank" href="https://knetminer.com/araknet/genepage?{}">Search for {}_homologues in KnetMiner</a></p>'.format(params, sp)
+            s += '<br><p><a target="_blank" href="https://knetminer.com/araknet/genepage?{}">Search for {}_homologues in KnetMiner</a></p>'.format(params, sp)
+        } else {
+            s = v.truncate(item._homologues[sp], maxlen)
         }
         data.push(['{}_homologues'.format(sp), s])
     }
