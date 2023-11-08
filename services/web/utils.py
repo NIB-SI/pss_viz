@@ -172,19 +172,26 @@ def expand_nodes(g, nodes):
     if len(nodes) > 1:
         print('Error : expand not implemented for more than one node')
     node = nodes[0]
-    g = nx.Graph(g)
+    ug = nx.Graph(g)
+
+    # only double expand not Reactions
+    if 'Reaction' in g.nodes[node]['labels']:
+        k = 1
+    else:
+        k = 2
+
 
     # find also neighbours on the second level to connect to the rest of the graph (if possible)
     all_neighbours = set(nodes)
     fromnodes = nodes
-    for i in range(2):
-        neighbours = set(itertools.chain.from_iterable([g.neighbors(node) for node in fromnodes]))  # - set(fromnodes)
+    for i in range(k):
+        neighbours = set(itertools.chain.from_iterable([ug.neighbors(node) for node in fromnodes]))  # - set(fromnodes)
         if not neighbours:
             break
         all_neighbours.update(neighbours)
         fromnodes = neighbours
 
-    reaction_expanded_nodes = reaction_expansion(g, all_neighbours)
+    reaction_expanded_nodes = reaction_expansion(ug, all_neighbours)
 
     all_neighbours.update(reaction_expanded_nodes)
 
