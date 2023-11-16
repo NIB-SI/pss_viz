@@ -267,6 +267,8 @@ function drawNetwork(graphdata){
     netviz.network.on('dragStart', onDragStart);
     netviz.network.on('dragEnd', onDragEnd);
 
+    netviz.network.on("doubleClick", onDoubleClick);
+
     // network.on("stabilized", function (params) {
     //     network.fit({animation: {duration: 500}});
     //    });
@@ -393,6 +395,17 @@ function onDragEnd(obj) {
         netviz.nodes.update({id: nid, fixed: true});
     }
 }
+
+
+function onDoubleClick (obj) {
+    // get the id of the clicked node
+    var clickedNodeId = obj.nodes[0];
+    expandNode(clickedNodeId)
+}
+
+
+
+
 
 function formatNodeInfoVex(nid) {
     return netviz.nodes.get(nid).title;
