@@ -156,13 +156,11 @@ def decode_htmlentities(text):
             else:
                 # they were using a name
                 cp = n2cp.get(ent)
-                if cp:
-                    return safe_unichr(cp)
-                else:
-                    return match.group()
+                return safe_unichr(cp) if cp else match.group()
         except Exception:
             # in case of errors, return original input
             return match.group()
+
     return RE_HTML_ENTITY.sub(substitute_entity, text)
 
 
@@ -175,7 +173,7 @@ def expand_nodes(g, nodes):
     # find also neighbours on the second level to connect to the rest of the graph (if possible)
     all_neighbours = set(nodes)
     fromnodes = nodes
-    for i in range(2):
+    for _ in range(2):
         neighbours = set(itertools.chain.from_iterable([g.neighbors(node) for node in fromnodes]))  # - set(fromnodes)
         if not neighbours:
             break
@@ -192,22 +190,17 @@ def extract_subgraph(g, nodes, k=2, ignoreDirection=False):
         g = nx.Graph(g.copy())
     all_neighbours = set(nodes)
     fromnodes = nodes
-    for i in range(k):
+    for _ in range(k):
         neighbours = set(itertools.chain.from_iterable([g.neighbors(node) for node in fromnodes]))  # - set(fromnodes)
         if not neighbours:
             break
         all_neighbours.update(neighbours)
         fromnodes = neighbours
-    result = g.subgraph(all_neighbours).copy()
-    return result
+    return g.subgraph(all_neighbours).copy()
 
 
 def extract_shortest_paths(g, query_nodes, ignoreDirection=True):
-    if ignoreDirection:
-        searchable_g = nx.Graph(g)
-    else:
-        searchable_g = g
-
+    searchable_g = nx.Graph(g) if ignoreDirection else g
     # print('--->', query_nodes)
     if len(query_nodes) == 1:
         if 'Reaction' in g.nodes[list(query_nodes)[0]]['labels']:
@@ -219,12 +212,11 @@ def extract_shortest_paths(g, query_nodes, ignoreDirection=True):
         paths_nodes = []
         for fr, to in itertools.combinations(query_nodes, 2):
             try:
-                paths = [p for p in nx.all_shortest_paths(searchable_g, source=fr, target=to)]
+                paths = list(nx.all_shortest_paths(searchable_g, source=fr, target=to))
                 # print(paths)
                 paths_nodes.extend([item for path in paths for item in path])
             except nx.NetworkXNoPath:
                 print('No paths:', fr, to)
-                pass
         # add back also nodes with no paths
         # this also covers the case with no paths at all
         paths_nodes = set(paths_nodes).union(query_nodes)
@@ -299,16 +291,11 @@ def parseJSON(url=None, path=None, headers={}):
 
 
 def graph2json(nodelist, edgelist, g, query_nodes=[]):
-    groups = set()
-    for node in nodelist:
-        groups.add(fetch_group(node['labels']))
-    groups_json = {}
-    for elt in groups:
-        if elt in NODE_STYLE:
-            groups_json[elt] = NODE_STYLE[elt]
-        else:
-            groups_json[elt] = NODE_STYLE['default']
-
+    groups = {fetch_group(node['labels']) for node in nodelist}
+    groups_json = {
+        elt: NODE_STYLE[elt] if elt in NODE_STYLE else NODE_STYLE['default']
+        for elt in groups
+    }
     nlist = []
     for nodeid, attrs in g.nodes(data=True):
         group = fetch_group(attrs['labels'])
@@ -323,10 +310,7 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
 
         label = attrs['name']
         label_parts = [x for x in re.split(r'(\[.+\])', label) if x.strip()]
-        if len(label_parts) == 1:
-            label = label_parts[0]
-        elif len(label_parts) == 2:
-            # label = '<b>{}</b>\n{}'.format(label_parts[0], label_parts[1].replace(',', ', '))
+        if len(label_parts) in {1, 2}:
             label = label_parts[0]
         else:
             print('Warning: strangely formatted label: ', label)
@@ -364,7 +348,7 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
 def fetch_group(labels):
     index_labels = ['Family', 'Plant', 'Foreign', 'Node', 'FunctionalCluster']
     for x in labels:
-        if not (x in index_labels):
+        if x not in index_labels:
             return x
 
     # just in case
