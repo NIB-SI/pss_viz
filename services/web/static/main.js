@@ -431,6 +431,12 @@ function edge_present(edges, newEdge) {
 }
 
 function expandNode(nid) {
+
+    if (!netviz.nodes.getIds().includes(nid)){
+        console.log("not a node in the current network")
+        return
+    }
+
     $.ajax({
       url: "/biomine/expand",
       async: false,

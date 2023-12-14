@@ -79,7 +79,7 @@
         <div class="row" style="height:calc(100vh - 60px);"> <!-- h-100"> -->
           <div class="px-1 col-xs-6 col-sm-5 col-md-5 col-lg-4 col-xl-3 col-xxl-3 border-end border-light border-2" id="configColumn">
             <form class="h-100" id="searchform">
-              <div class="pt-3">
+              <div>
                   <h1 class="card-title"> {% block page_title %}{% endblock %} </h1>
                   <div  class="card-text"> {% block description %}{% endblock %} </div>
               </div>
@@ -111,8 +111,10 @@
     // enable all popover in the document:
     $(document).ready(function () {
         $('[data-toggle="popover"]').popover({
-          container: 'body'
-        })
+          container: 'body',
+          trigger: 'focus',
+          delay: 200,
+        });
     });
   </script>
 </html>
