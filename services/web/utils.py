@@ -118,7 +118,9 @@ NODE_STYLE = {
 }
 
 
-def edge_style(edge_type):
+def edge_style(edge):
+
+    edge_type = edge['label']
 
     if edge_type in EDGE_STYLE:
         return {
@@ -350,12 +352,30 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
     for nodeid, attrs in g.nodes(data=True):
         group = fetch_group(attrs['labels'])
 
-        nodeData = {'id': nodeid, 'name': attrs['name'], 'group': group,}
+        nodeData = {
+            'id': nodeid,
+            'name': attrs['name'],
+            'group': group
+        }
 
-        for atr in ['name', 'short_name', 'description', 'evidence_sentence', 'reaction_type', 'functional_cluster_id', 'reaction_id']:
+        for atr in [
+            'name',
+            'short_name',
+            'description',
+            'evidence_sentence',
+            'reaction_type',
+            'functional_cluster_id',
+            'reaction_id',
+            'pathway',
+            'reaction_mechanism',
+            'reaction_effect'
+            ]:
             nodeData[atr] = attrs.get(atr, '')
 
-        for atr in ['synonyms', 'external_links']:
+        for atr in [
+            'synonyms',
+            'external_links'
+            ]:
             nodeData[atr] = attrs.get(atr, [])
 
         label = attrs['name']
@@ -391,11 +411,23 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
 
     elist = []
     for fr, to, attrs in g.edges(data=True):
-        edge_type = attrs['label']
-        d = edge_style(edge_type)
-        d['from'] = fr
-        d['to'] = to
-        elist.append(d)
+        edgeData = {}
+
+        for atr in [
+            'source_organ',
+            'target_organ',
+            'source_location',
+            'target_location',
+            'source_form',
+            'target_form'
+            ]:
+            edgeData[atr] = attrs.get(atr, None)
+
+        edgeData = {**edgeData, **edge_style(attrs)}
+        edgeData['from'] = fr
+        edgeData['to'] = to
+
+        elist.append(edgeData)
 
     return {'network': {'nodes': nlist, 'edges': elist}, 'groups': groups_json}
 
@@ -412,9 +444,11 @@ def get_autocomplete_node_data(g):
     data = []
     for nodeid, attrs in g.nodes(data=True):
         elt = {'id': nodeid}
-        for atr in ['name', 'synonyms', 'description', 'evidence_sentence', 'functional_cluster_id'] + [f'{sp}_homologues' for sp in SPECIES]:
+        for atr in ['name', 'synonyms', 'description', 'evidence_sentence', 'functional_cluster_id', 'external_links'] + [f'{sp}_homologues' for sp in SPECIES]:
             elt[atr] = attrs.get(atr, '')
         elt['synonyms'] = ', '.join(elt['synonyms'])
+        elt['external_links'] = ', '.join(elt['external_links'])
+
         data.append(elt)
     return {'node_data': data}
 

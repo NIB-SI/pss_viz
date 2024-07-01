@@ -274,23 +274,47 @@ function drawNetwork(graphdata){
     //    });
 }
 
+function postprocess_edge(item) {
+    let maxlen = 100;
+    let header = '<table class="table table-striped table-bordered tooltip_table">\
+                  <tbody>';
+    let footer = '</tbody>\
+                  </table>';
+
+    let data = [['Source organ/tissue', item.source_organ],
+                ['Target organ/tissue', item.target_organ],
+                ['Source location/organelle', item.source_location],
+                ['Target location/organelle', item.target_location],
+                ['Source form', item.source_form],
+                ['Target form', item.target_form],
+
+    ];
+
+    let table = '';
+    data.forEach(function (item, index) {
+        if (item[1] !=null) {
+            let row = '<tr>\
+                            <td><strong>{}</strong></td>\
+                            <td class="text-wrap">{}</td>\
+                       </tr>'.format(item[0], item[1]);
+            table += row;
+        }
+    });
+    table = header + table + footer;
+    item.title = htmlTitle(table);
+    return item;
+}
 
 function postprocess_edges(edges) {
     edges.forEach((item, i) => {
-        // item.label = item.type;
-        // if(item.type == 'binding') {
-        //     item.arrows = undefined;
-        // }
-        // else {
-        //     item.arrows = 'to';
-        // }
-
+        edges[i] = postprocess_edge(item);
     });
 }
 
+
 function postprocess_node(item) {
 
-    let maxlen = 150;
+    let maxlen = 300;
     let header = '<table class="table table-striped table-bordered tooltip_table w-100" style="table-layout: fixed;">\
                   <tbody>';
     let footer = '</tbody>\
@@ -301,7 +325,10 @@ function postprocess_node(item) {
                 ['FunctionalCluster id', item.functional_cluster_id],
                 ['Description', v.truncate(item.description, maxlen)],
                 ['Synonyms', v.truncate(item.synonyms, maxlen)],
-                ['Evidence', v.truncate(item.evidence_sentence, maxlen)]
+                ['Evidence', v.truncate(item.evidence_sentence, maxlen)],
+                ['Mechanism', item.reaction_mechanism],
+                ['Effect', item.reaction_effect],
+                ['Pathway', item.pathway]
     ]
 
     external_links = [];
@@ -403,12 +430,12 @@ function onDoubleClick (obj) {
     expandNode(clickedNodeId)
 }
 
-
-
-
-
 function formatNodeInfoVex(nid) {
     return netviz.nodes.get(nid).title;
+}
+
+function formatEdgeInfoVex(nid) {
+    return netviz.edges.get(nid).title;
 }
 
 function edge_present(edges, newEdge) {
@@ -509,7 +536,7 @@ function initContextMenus() {
     };
     var edgeMenu = {
         "delete": {name: "Delete"},
-        // "info": {name: "Info"}
+        "info": {name: "Info"}
     };
 
     $.contextMenu({
