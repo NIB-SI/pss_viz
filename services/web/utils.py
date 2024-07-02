@@ -324,6 +324,19 @@ def parseJSON(url=None, path=None, headers={}):
         node['properties']['functional_cluster_id'] = node['properties'].get('functional_cluster_id', '')
         node['properties']['description'] = decode_htmlentities(node['properties'].get('description', ''))
         node['properties']['evidence_sentence'] = decode_htmlentities(node['properties'].get('evidence_sentence', ''))
+
+        label = node['properties']['name']
+        label_parts = [x for x in re.split(r'(\[.+\])', label) if x.strip()]
+        if len(label_parts) == 1:
+            label = label_parts[0]
+        elif len(label_parts) == 2:
+            label = label_parts[0]
+        else:
+            print('Warning: strangely formatted label: ', label)
+        node['properties']['label'] = label
+
+
+
         g.add_node(node['id'], labels=node['labels'], **node['properties'])
 
     for edge in edges:
@@ -359,7 +372,7 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
         }
 
         for atr in [
-            'name',
+            'label',
             'short_name',
             'description',
             'evidence_sentence',
@@ -378,21 +391,8 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
             ]:
             nodeData[atr] = attrs.get(atr, [])
 
-        label = attrs['name']
-        label_parts = [x for x in re.split(r'(\[.+\])', label) if x.strip()]
-        if len(label_parts) == 1:
-            label = label_parts[0]
-        elif len(label_parts) == 2:
-            # label = '<b>{}</b>\n{}'.format(label_parts[0], label_parts[1].replace(',', ', '))
-            label = label_parts[0]
-        else:
-            print('Warning: strangely formatted label: ', label)
-
         if group == "Reaction":
-            nodeData['label'] = f"<b>{label}</b>\n{attrs.get('reaction_type', '')}"
-
-        else:
-            nodeData['label'] = label
+            nodeData['label'] = f"<b>{nodeData['label']}</b>\n{attrs.get('reaction_type', '')}"
 
         nodeData['_homologues'] = {}
         for sp in SPECIES:
@@ -444,7 +444,7 @@ def get_autocomplete_node_data(g):
     data = []
     for nodeid, attrs in g.nodes(data=True):
         elt = {'id': nodeid}
-        for atr in ['name', 'synonyms', 'description', 'evidence_sentence', 'functional_cluster_id', 'external_links'] + [f'{sp}_homologues' for sp in SPECIES]:
+        for atr in ['name', 'label', 'synonyms', 'description', 'evidence_sentence', 'functional_cluster_id', 'external_links'] + [f'{sp}_homologues' for sp in SPECIES]:
             elt[atr] = attrs.get(atr, '')
         elt['synonyms'] = ', '.join(elt['synonyms'])
         elt['external_links'] = ', '.join(elt['external_links'])

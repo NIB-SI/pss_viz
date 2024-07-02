@@ -77,8 +77,7 @@ def expand():
     # write potential edges in JSON
     elist = []
     for fr, to, attrs in potentialEdges:
-        edge_type = attrs['label']
-        d = utils.edge_style(edge_type)
+        d = utils.edge_style(attrs)
         d['from'] = fr
         d['to'] = to
         elist.append(d)

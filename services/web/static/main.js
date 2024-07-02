@@ -58,28 +58,28 @@ $( document ).ready(function() {
 
     $('#add2selected').click(function(){
         var selected_values = select[0].selectize.getValue();
-        // var maxlen = 100;
+        var maxlen = 30;
         // console.log(selected_values);
         selected_values.forEach(function (item, index) {
             let node = node_search_data_dict[item];
-            let nodeName = v.truncate(node.name, 25);
-            let functional_cluster_id = node.functional_cluster_id.length>0 ? '<small><strong>fc identifier: </strong>{}</small>'.format(node.functional_cluster_id) : "";
-            let description = node.description.length>0 ? '<small><strong>description: </strong>{}</small>'.format(node.description) : "";
-            let synonyms = node.synonyms.length>0 ? '<small><strong>synonyms: </strong>{}</small>'.format(node.synonyms) : "";
-            let evidence_sentence = node.evidence_sentence.length>0 ? '<small><strong>evidence: </strong>{}</small>'.format(node.evidence_sentence) : "";
-            let node_id = '<small style="font-size:0px;"><strong>id: </strong><div class="node_id">{}</div></small>'.format(node.id);
 
+            let title = node.label;
+            let node_name = '<small><strong>Name: </strong>{}</small>'.format(v.truncate(node.name, maxlen));
+            let functional_cluster_id = node.functional_cluster_id.length>0 ? '<small><strong>FC identifier: </strong>{}</small>'.format(node.functional_cluster_id) : "";
+            let description = node.description.length>0 ? '<small><strong>Description: </strong>{}</small>'.format(node.description) : "";
+            let synonyms = node.synonyms.length>0 ? '<small><strong>Synonyms: </strong>{}</small>'.format(node.synonyms) : "";
+            let node_id = '<div style="font-size:0px;" class="node_id">{}</div>'.format(node.id);
             let list_item = '<a href="#" class="list-group-item list-group-item-action">\
                 <div class="d-flex w-100 justify-content-between">\
                 <h5 class="mb-1">{}</h5>\
-                <button type="button" class="btn btn-link btn-sm float-end"><i class="bi-x-circle" style="color: red;"></i></button>\
+                <button type="button" class="btn btn-link btn-sm float-end p-0 m-0"><i class="bi-x-circle" style="color: red;"></i></button>\
                 </div>\
                 {}\
                 {}\
                 {}\
                 {}\
                 {}\
-                </a>'.format(nodeName, functional_cluster_id, description, synonyms, evidence_sentence, node_id);
+                </a>'.format(title, node_name, functional_cluster_id, description, synonyms, node_id);
 
          $('#queryList').append(list_item);
          // scroll to bottom
@@ -101,7 +101,7 @@ $( document ).ready(function() {
         valueField: "id",
         labelField: "name",
         sortField: "name",
-        searchField: ['name', 'synonyms', 'description', 'evidence_sentence', 'functional_cluster_id'],
+        searchField: ['name', 'synonyms', 'description', 'evidence_sentence', 'functional_cluster_id', 'external_links'],
         highlight: false,
         render: {
         //   item: function (item, escape) {
@@ -110,18 +110,19 @@ $( document ).ready(function() {
           option: function (item, escape) {
             let maxlen = 50;
             let name = '<span class="name"> {} </span>'.format(v.truncate(escape(item.name), maxlen));
-            let functional_cluster_id = item.functional_cluster_id.length>0 ? '<small><strong>fc identifier: </strong>{}</small>'.format(item.functional_cluster_id) : "";
+            let functional_cluster_id = item.functional_cluster_id.length>0 ? '<span class="caption"> <strong>fc identifier::</strong> {} </span>'.format(item.functional_cluster_id) : "";
             let description = item.description.length>0 ? '<span class="caption"> <strong>description:</strong> {} </span>'.format(v.truncate(escape(item.description), maxlen - 'description:'.length)) : "";
             let synonyms = item.synonyms.length>0 ? '<span class="caption"> <strong>synonyms:</strong> {} </span>'.format(v.truncate(escape(item.synonyms), maxlen - 'synonyms:'.length)) : "";
             let evidence_sentence = item.evidence_sentence.length>0 ? '<span class="caption"> <strong>evidence:</strong> {} </span>'.format(v.truncate(escape(item.evidence_sentence), maxlen - 'evidence:'.length)) : "";
-
+            let external_links = item.external_links.length>0 ? '<span class="caption"> <strong>external links:</strong> {} </span>'.format(v.truncate(escape(item.external_links), maxlen - 'external links:'.length)) : "";
             return '<div>\
             {}\
             {}\
             {}\
             {}\
             {}\
-            </div>'.format(name, functional_cluster_id, description, synonyms, evidence_sentence);
+            {}\
+            </div>'.format(name, functional_cluster_id, description, synonyms, evidence_sentence, external_links);
           },
         }
     });

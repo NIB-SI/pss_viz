@@ -5,96 +5,25 @@
 {% block page_title %}PSS Explorer{% endblock %}
 
 {% block description %}
-  <p>
-    Use the search-box to find entities (including reactions) in PSS and add them to the query box.
-    <button type="button" class="py-0  btn btn-outline-info btn-xs inline" data-toggle="popover" data-bs-content='
-   <div style="width:100%;">
-
-    <p  class="card-text">
-    <b>Clicking <em>extract subgraph</em>:</b> If the query contains only one node a neighbourhood is returned. Otherwise, the undirected shortest paths between all pairs of nodes are merged and returned.
-    </p>
-
-   <p><b>The result:</b> Reactions (and interactions) in PSS are represented as nodes, the participants and the reaction itself, and edges (or arcs) connecting participants to the reaction in an informational way. <p>
-
-   <p> For example, the following reaction  (A + B &rarr; C, catalysed by e):
-      <div style="width:400; height:135">
-        <img  width=400px; height=135px"  src="https://skm.nib.si/static/home/images/basic-reaction-biology-labelled.png"/>
-      </div>
-    Is represented in PSS as:
-      <div style="width:400px; height:200px;">
-        <img width=400 height=200 src="https://skm.nib.si/static/home/images/basic-reaction-labelled.png"/>
-      </div>
-    </p>
-
-   <p>For more information, see <a href="https://skm.nib.si/documentation/pss-db#reaction-types" target="_blank">SKM Documentation &#167; Reactions</a>. </p>
-
-   <p> Note that the shortest path does not take into account the direction of the edges and does not extract the complete reactions.
-  </div>' data-bs-html="true" title="Help">
-      More
-    </button>
-  </p>
 {% endblock %}
 
 {% block search_interface %}
-  <div class="mb-3">
-    <div id="searchSelectWrapper">
-      <label for="queryInput" class="form-label">Search PSS</label>
-    </div>
-    <div id="myModal">
-      <select id="queryInput" class="select_items"></select>
-    </div>
-    <div class="row">
-      <div class="col-md-8 offset-md-4 me-0">
-        <button type="button" class="btn btn-outline-primary float-end" id="add2selected">add to query</button>
-      </div>
-    </div>
+<div id="searchSelectWrapper">
+</div>
+<div class="input-group mb-3">
+  <select id="queryInput" class="select_items form-select" placeholder="Search PSS nodes" aria-label="Search PSS nodes" aria-describedby="add2selected" ></select>
+  <button class="btn btn-outline-secondary p-1" type="button" id="add2selected">Add</button>
+</div>
+
+  <label for="queryList" class="form-label mb-0 pb-0"><h6 class="mb-0 pb-0">Query:</h4></label>
+    <div id="queryList"class="list-group flex-grow-1" style="overflow-y: scroll;"></div>
+
+
+<div id="push_down" class="flex-column w-100 align-self-end">
+  <div class="row px-3">
+    <button type="button" class="btn btn-primary p-1 " id="searchButton">Search!</button>
   </div>
-
-  <label for="queryList" class="form-label">Your query</label>
-  <div class="list-group" id="queryList"></div>
-
-  <div class="container mb-3 me-0 pe-0 ps-0 pe-0">
-    <div class="row justify-content-between">
-      <div class="col-6">
-
-        <div class="dropdown float-start ps-0">
-          <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="saveAsButton" data-bs-toggle="dropdown" aria-expanded="false">
-            export
-          </button>
-          <ul class="dropdown-menu" id="saveAsDropdown" aria-labelledby="saveAsButton">
-            <a class="dropdown-item" href="#nodes">nodes (.tsv format)</a>
-            <a class="dropdown-item" href="#edges">edges (.tsv format)</a>
-            <a class="dropdown-item" href="#png">image (.png format)</a>
-            <a class="dropdown-item" href="#json">network (.json format)</a>
-          </ul>
-        </div>
-    </div>
-
-      <div class="col-6">
-        <div class="pe-0">
-          <button type="button" class="btn btn-primary float-end" id="searchButton">search</button>
-        </div>
-        <!-- <input type="button" onclick="exportSvg();" value="Export SVG"/> -->
-
-      </div>
-
-    </div>
-  </div>
-
-    <a id="tip_popover"
-       style="top:45px; right:40px; position: absolute; z-index: 99;"
-       class="py-0  btn btn-outline-danger btn-xs inline"
-       tabindex="0"
-       role="button"
-       data-trigger="focus"
-       data-toggle="popover"
-       data-bs-content='
-   <div style="width:100%;">
-            <p>Right click on an edge or node to access its context menu.</p>
-            <p>Double click on a node to expand its neighbours.
-  </div>' data-bs-html="true" title="Network tips">
-      Tip!
-    </a>
-
+</div>
 
 {% endblock %}
+
