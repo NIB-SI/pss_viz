@@ -491,14 +491,14 @@ function expandNode(nid) {
 
               data.network.edges.forEach((newEdge, i) => {
                   if(!edge_present(netviz.edges, newEdge)) {
-                      netviz.edges.add(newEdge);
+                      netviz.edges.add(postprocess_edge(newEdge));
                       newCounter += 1;
                   }
               })
 
               data.network.potential_edges.forEach((edge, i) => {
                   if(!edge_present(netviz.edges, edge)) {
-                      netviz.edges.add(edge);
+                      netviz.edges.add(postprocess_edge(edge));
                       newCounter += 1;
                   }
               })
