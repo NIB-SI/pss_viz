@@ -12,7 +12,7 @@ SPECIES = [
     "vvi",
 ]
 
-NODE_ANNOT_DATA = ['id', 'name', 'short_name', 'label', 'group','description','synonyms','evidence_sentence','external_links','reaction_type', 'functional_cluster_id', 'reaction_id'];
+NODE_ANNOT_DATA = ['id', 'name', 'short_name', 'label', 'type','description','synonyms','evidence_sentence','external_links','reaction_type', 'functional_cluster_id', 'reaction_id'];
 SPECIES.forEach(function(sp){
     NODE_ANNOT_DATA.push(`${sp}_homologues`)
 })
@@ -263,7 +263,7 @@ function drawNetwork(graphdata){
     netviz_options['groups'] = graphdata.groups
 
     postprocess_edges(data.edges);
-    postprocess_nodes(data.nodes);
+    postprocess_nodes(data.nodes, graphdata.groups);
     netviz.network = new vis.Network(container, data, netviz_options);
     netviz.network.on('dragStart', onDragStart);
     netviz.network.on('dragEnd', onDragEnd);
@@ -313,7 +313,7 @@ function postprocess_edges(edges) {
 }
 
 
-function postprocess_node(item) {
+function postprocess_node(item, groups) {
 
     let maxlen = 300;
     let header = '<table class="table table-striped table-bordered tooltip_table w-100" style="table-layout: fixed;">\
@@ -321,7 +321,7 @@ function postprocess_node(item) {
     let footer = '</tbody>\
                   </table>';
     let data = [['Name', item.name],
-                ['Group', item.group],
+                ['Type', item.type],
                 ['Reaction type', item.reaction_type],
                 ['FunctionalCluster id', item.functional_cluster_id],
                 ['Description', v.truncate(item.description, maxlen)],
@@ -344,6 +344,7 @@ function postprocess_node(item) {
     }
     data.push(['External links', external_links.join("<br>")])
 
+    has_homologues = false
     for (let sp in item._homologues) {
         // s = v.truncate(item._homologues[sp], maxlen)
         if (sp=="ath") {
@@ -356,11 +357,12 @@ function postprocess_node(item) {
             s = hrefs.join(", ")
 
             params = jQuery.param({list:item._homologues[sp]})
-            s += '<br><p><a target="_blank" href="https://knetminer.com/araknet/genepage?{}">Search for {}_homologues in KnetMiner</a></p>'.format(params, sp)
+            s += '<br><br>  <p><a target="_blank" href="https://knetminer.com/araknet/genepage?{}">Search for {}_homologues in KnetMiner</a></p>'.format(params, sp)
         } else {
             s = v.truncate(item._homologues[sp], maxlen)
         }
         data.push(['{}_homologues'.format(sp), s])
+        has_homologues = true
     }
 
     let table = '';
@@ -376,13 +378,54 @@ function postprocess_node(item) {
     });
     table = header + table + footer;
     item.title = htmlTitle(table);
+
+
+    if (has_homologues){
+        annotations = ''
+        for (let sp in item._homologues) {
+            annotations = annotations + " " + sp + " "
+        }
+
+        fill = groups[item.type]['color']['background']
+        if (item.query_node){
+            stroke = 'red';
+            stroke_width='5';
+        }
+        else {
+            stroke = groups[item.type]['color']['border'];
+            stroke_width='3';
+        }
+
+        var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="100">' +
+            '<circle fill="' + fill + '"' +
+            ' stroke="' + stroke + '"' +
+            ' stroke-width="' + stroke_width + '"' +
+            ' cx="150" cy="50" r="45"/>' +
+            '<text x="50%" y="50%" text-anchor="middle" font-family="arial" font-size="24" dominant-baseline="middle">' +
+            item.label +
+            '</text>' +
+
+
+            // '<text x=50 y=50>' + item.label + '</text>'
+            '</svg>';
+
+        var url = "data:image/svg+xml;charset=utf-8,"+ encodeURIComponent(svg);
+
+
+        item.image = url;
+        item.shape = 'image'
+        item.font = {size: 8, align: 'center', vadjust:-8}
+        item.size = 30
+        item.label = annotations
+    }
+
     return item;
 }
 
-function postprocess_nodes(nodes) {
+function postprocess_nodes(nodes, groups) {
     nodes.forEach((item, i) => {
         // console.log('postproceesing ' + item.label);
-        nodes[i] = postprocess_node(item);
+        nodes[i] = postprocess_node(item, groups);
     });
 }
 
@@ -411,7 +454,6 @@ function onDragStart(obj) {
         var nid = obj.nodes[0];
         netviz.nodes.update({id: nid, fixed: false});
     }
-
 }
 
 function onDragEnd(obj) {
@@ -420,6 +462,7 @@ function onDragEnd(obj) {
     var nid = obj.nodes;
     if (obj.hasOwnProperty('nodes') && obj.nodes.length==1) {
         var nid = obj.nodes[0];
+        console.log(nid)
         netviz.nodes.update({id: nid, fixed: true});
     }
 }
@@ -481,7 +524,7 @@ function expandNode(nid) {
               let newCounter = 0
               data.network.nodes.forEach((item, i) => {
                   if (!netviz.nodes.get(item.id)) {
-                      netviz.nodes.add(postprocess_node(item));
+                      netviz.nodes.add(postprocess_node(item, data.groups));
                       newCounter += 1;
                   }
                   else {
@@ -649,7 +692,7 @@ function export_nodes() {
         return;
     }
 
-    var header = ['id', 'label','group','description','synonyms','evidence sentence','external links','reaction type', 'functional_cluster_id'];
+    var header = ['id', 'label','type','description','synonyms','evidence sentence','external links','reaction type', 'functional_cluster_id'];
 
     SPECIES.forEach(function(sp){
         header.push('{}_homologues'.format(sp))
@@ -659,7 +702,7 @@ function export_nodes() {
     netviz.nodes.forEach(function(node, id){
         var line = new Array;
 
-        ['id', 'label','group','description','synonyms','evidence_sentence', 'external_links','reaction_type', 'functional_cluster_id'].forEach(function(aname){
+        ['id', 'label','type','description','synonyms','evidence_sentence', 'external_links','reaction_type', 'functional_cluster_id'].forEach(function(aname){
             let atr = node[aname];
             if (atr != undefined)
                 line.push(format_cell(atr));

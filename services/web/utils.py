@@ -350,7 +350,10 @@ def parseJSON(url=None, path=None, headers={}):
     return nodes, edges, g
 
 
-def graph2json(nodelist, edgelist, g, query_nodes=[]):
+def graph2json(nodelist, edgelist, g, query_nodes=None):
+    if query_nodes is None:
+        query_nodes = []
+
     groups = set()
     for node in nodelist:
         groups.add(fetch_group(node['labels']))
@@ -368,7 +371,7 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
         nodeData = {
             'id': nodeid,
             'name': attrs['name'],
-            'group': group
+            'type': group
         }
 
         for atr in [
@@ -395,9 +398,11 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
             nodeData['label'] = f"<b>{nodeData['label']}</b>\n{attrs.get('reaction_type', '')}"
 
         nodeData['_homologues'] = {}
+        has_group = True # style group
         for sp in SPECIES:
             key = f'{sp}_homologues'
             if key in attrs:
+                has_group = False
                 nodeData['_homologues'][sp] = ', '.join(attrs[key])
 
         if nodeid in query_nodes:
@@ -406,6 +411,12 @@ def graph2json(nodelist, edgelist, g, query_nodes=[]):
                                  'highlight': {'border': 'red'},  # this does not work, bug in vis.js
                                  'hover': {'border': 'red'}}  # this does not work, bug in vis.js
             nodeData['borderWidth'] = 2
+            nodeData['query_node'] = True
+        else:
+            nodeData['query_node'] = False
+
+        if has_group:
+            nodeData['group'] = group
 
         nlist.append(nodeData)
 
