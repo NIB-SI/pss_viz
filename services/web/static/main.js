@@ -288,7 +288,8 @@ function postprocess_edge(item) {
                 ['Target location/organelle', item.target_location],
                 ['Source form', item.source_form],
                 ['Target form', item.target_form],
-
+                ['Identifier', item.target_identifier],
+                ['Identifier', item.source_identifier]
     ];
 
     let table = '';

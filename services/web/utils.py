@@ -430,7 +430,9 @@ def graph2json(nodelist, edgelist, g, query_nodes=None):
             'source_location',
             'target_location',
             'source_form',
-            'target_form'
+            'target_form',
+            'source_identifier',
+            'target_identifier'
             ]:
             edgeData[atr] = attrs.get(atr, None)
 
