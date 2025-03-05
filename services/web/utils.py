@@ -457,7 +457,7 @@ def get_autocomplete_node_data(g):
     data = []
     for nodeid, attrs in g.nodes(data=True):
         elt = {'id': nodeid}
-        for atr in ['name', 'label', 'synonyms', 'description', 'evidence_sentence', 'functional_cluster_id', 'external_links'] + [f'{sp}_homologues' for sp in SPECIES]:
+        for atr in ['name', 'reaction_id', 'label', 'synonyms', 'description', 'evidence_sentence', 'functional_cluster_id', 'external_links'] + [f'{sp}_homologues' for sp in SPECIES]:
             elt[atr] = attrs.get(atr, '')
         elt['synonyms'] = ', '.join(elt['synonyms'])
         elt['external_links'] = ', '.join(elt['external_links'])

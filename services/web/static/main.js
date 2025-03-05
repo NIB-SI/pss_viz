@@ -33,6 +33,20 @@ var select = null;
 
 format.extend (String.prototype, {});
 
+
+// Below from https://stackoverflow.com/a/78550846/4996681
+function addQueryParam(key, value) {
+    // Get the current URL
+    let url = new URL(window.location);
+
+    // Add or update the query parameter
+    url.searchParams.append(key, value);
+
+    // Update the URL without reloading the page
+    history.pushState({}, '', url);
+}
+
+
 $(window).resize(function() {
     scale();
 });
@@ -67,6 +81,7 @@ $( document ).ready(function() {
             let node_name = '<small><strong>Name: </strong>{}</small>'.format(v.truncate(node.name, maxlen));
             let functional_cluster_id = node.functional_cluster_id.length>0 ? '<small><strong>FC identifier: </strong>{}</small>'.format(node.functional_cluster_id) : "";
             let description = node.description.length>0 ? '<small><strong>Description: </strong>{}</small>'.format(node.description) : "";
+            let evidence = node.evidence_sentence.length>0 ? '<small><strong>Evidence: </strong>{}</small>'.format(v.truncate(node.evidence_sentence, 100)) : "";
             let synonyms = node.synonyms.length>0 ? '<small><strong>Synonyms: </strong>{}</small>'.format(node.synonyms) : "";
             let node_id = '<div style="font-size:0px;" class="node_id">{}</div>'.format(node.id);
             let list_item = '<a href="#" class="list-group-item list-group-item-action">\
@@ -79,7 +94,8 @@ $( document ).ready(function() {
                 {}\
                 {}\
                 {}\
-                </a>'.format(title, node_name, functional_cluster_id, description, synonyms, node_id);
+                {}\
+                </a>'.format(title, node_name, functional_cluster_id, description, evidence, synonyms, node_id);
 
          $('#queryList').append(list_item);
          // scroll to bottom
@@ -128,8 +144,10 @@ $( document ).ready(function() {
     });
 
     $('#searchButton').click(function(){
-        if($('.node_id').toArray().length==0)
+        if($('.node_id').toArray().length==0){
+            console.log("no items")
             return;
+        }
 
         $.ajax({
           url: "/biomine/search",
@@ -148,6 +166,21 @@ $( document ).ready(function() {
               alert('Server error while loading the network.');
           }
         });
+
+
+        // URL
+        window.history.replaceState({}, '', window.location.pathname);
+        $('.node_id').toArray().map(x => $(x).text()).forEach((item, i) => {
+            let node = node_search_data_dict[item];
+            console.log(node)
+            if (("functional_cluster_id" in node) && (node.functional_cluster_id !=='')){
+                console.log("functional_cluster_id", node)
+                addQueryParam("functional_cluster_id", node.functional_cluster_id)
+            } else if (("reaction_id" in node)){
+                console.log("reaction_id", node)
+                addQueryParam("reaction_id", node.reaction_id)
+            }
+        })
     });
 
 
@@ -184,10 +217,14 @@ $( document ).ready(function() {
     initContextMenus();
 
     urlParams = new URLSearchParams(window.location.search);
-    reaction_list = urlParams.getAll('reaction_id');
-    // console.log(reaction_list);
-    functional_cluster_list = urlParams.getAll('functional_cluster_id');
-    // console.log(functional_cluster_list);
+
+    var reaction_list = urlParams.getAll('reaction_id');
+    var reaction_list = reaction_list.filter(function(v){return v!==''});
+    console.log(reaction_list);
+
+    var functional_cluster_list = urlParams.getAll('functional_cluster_id');
+    var functional_cluster_list = functional_cluster_list.filter(function(v){return v!==''});
+    console.log(functional_cluster_list);
 
     if(reaction_list.length>0){
         for (var i = reaction_list.length - 1; i >= 0; i--) {
@@ -350,9 +387,9 @@ function postprocess_node(item, groups) {
         // s = v.truncate(item._homologues[sp], maxlen)
         if (sp=="ath") {
             hrefs = []
-            console.log(item._homologues[sp])
+            // console.log(item._homologues[sp])
             item._homologues[sp].split(", ").forEach(function (item, index) {
-                console.log(item)
+                // console.log(item)
                 hrefs.push('<a target="_blank" href="https://www.arabidopsis.org/servlets/TairObject?name={}&type=locus">{}</a>  '.format(item, item))
             })
             s = hrefs.join(", ")

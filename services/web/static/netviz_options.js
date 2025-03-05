@@ -7,7 +7,6 @@ function hover_edge(values, id, selected, hovering) {
   values.width = 3;
 }
 
-
 function hover_node_label(values, id, selected, hovering) {
   values.mod = 'normal';
 }
@@ -42,7 +41,7 @@ var netviz_options = {
         },
         endPointOffset: {
           from: 0,
-          to: 0
+          to: -5
         },
         arrowStrikethrough: true,
         hoverWidth: 3,
@@ -55,7 +54,7 @@ var netviz_options = {
             border: '#6c7881',
             background: '#9BDBFF'
         },
-        widthConstraint: { maximum: 180},
+        widthConstraint: { maximum: 180 },
         font: {
             multi: 'html'
         },
