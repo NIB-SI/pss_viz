@@ -445,7 +445,7 @@ def graph2json(nodelist, edgelist, g, query_nodes=None):
     return {'network': {'nodes': nlist, 'edges': elist}, 'groups': groups_json}
 
 def fetch_group(labels):
-    index_labels = ['Family', 'Plant', 'Foreign', 'Node', 'FunctionalCluster']
+    index_labels = ['Family', 'Plant', 'Foreign', 'Node', 'FunctionalCluster', 'FunctionalClusterClass']
     for x in labels:
         if not (x in index_labels):
             return x
