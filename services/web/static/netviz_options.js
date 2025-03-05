@@ -3,14 +3,17 @@ function hover_edge_label(values, id, selected, hovering) {
   values.mod = 'normal';
 }
 
+function hover_edge(values, id, selected, hovering) {
+  values.width = 3;
+}
+
+
 function hover_node_label(values, id, selected, hovering) {
   values.mod = 'normal';
 }
 
 function hover_node(values, id, selected, hovering) {
-  values.borderWidth = 4;
-  // values.borderColor = 'blue'
-  // values.color = 'blue'
+  values.borderWidth = 5;
 }
 
 var netviz_options = {
@@ -34,14 +37,16 @@ var netviz_options = {
             color: '#808080'
         },
         chosen: {
+            edge: hover_edge,
             label: hover_edge_label
         },
         endPointOffset: {
           from: 0,
-          to: -5
+          to: 0
         },
         arrowStrikethrough: true,
-        hoverWidth: 2
+        hoverWidth: 3,
+        color: {inherit: false}
     },
     nodes: {
         shape: 'box',
@@ -56,7 +61,7 @@ var netviz_options = {
         },
         chosen: {
             node: hover_node,
-            label: hover_node_label,
+            label: false,
         }
     },
     physics: {

@@ -25,31 +25,31 @@ SPECIES = [
 
 EDGE_STYLE = {
     'ACTIVATES':  {
-        'color': {'color': "#008040", 'hover': '#008040'},
+        'color': {'color': "#008040", 'hover': '#008040', 'highlight':'#008040'},
         'arrows': {'to': {'enabled': True, 'type': 'circle'}},
     },
     'INHIBITS': {
-        'color': {'color': "#cd0000", 'hover': '#cd0000'},
+        'color': {'color': "#cd0000", 'hover': '#cd0000', 'highlight':'#cd0000'},
         'arrows': {'to': {'enabled': True, 'type': 'bar'}}
     },
     'SUBSTRATE': {
-        'color': {'color': "#485056", 'hover': '#485056'},
+        'color': {'color': "#5d5d5d", 'hover': '#5d5d5d', 'highlight':'#5d5d5d'},
         'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
     },
     'TRANSLOCATE_FROM': {
-        'color': {'color': "#5d5d5d", 'hover': '#49606d'},
+        'color': {'color': "#5d5d5d", 'hover': '#5d5d5d', 'highlight':'#5d5d5d'},
         'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
     },
     'PRODUCT': {
-        'color': {'color': "#485056", 'hover': '#485056'},
+        'color': {'color': "#5d5d5d", 'hover': '#5d5d5d', 'highlight':'#5d5d5d'},
         'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
     },
     'TRANSLOCATE_TO': {
-        'color': {'color': "#5d5d5d", 'hover': '#49606d'},
+        'color': {'color': "#5d5d5d", 'hover': '#5d5d5d', 'highlight':'#5d5d5d'},
         'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
     },
     'default': {
-        'color': {'color': "#000000", 'hover': '#000000'},
+        'color': {'color': "#000000", 'hover': '#000000', 'highlight':'#000000'},
         'arrows': {'to': {'enabled': True, 'type': 'arrow'}}
     },
 }
