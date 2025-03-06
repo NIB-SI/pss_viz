@@ -4,7 +4,7 @@ function hover_edge_label(values, id, selected, hovering) {
 }
 
 function hover_edge(values, id, selected, hovering) {
-  values.width = 3;
+  values.width = values.width * 1.5;
 }
 
 function hover_node_label(values, id, selected, hovering) {
