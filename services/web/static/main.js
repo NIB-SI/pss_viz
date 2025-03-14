@@ -149,13 +149,19 @@ $( document ).ready(function() {
             return;
         }
 
+        var directed_search = $("#directed_search").is(":checked")
+        console.log(directed_search)
+
         $.ajax({
           url: "/biomine/search",
           dataType: 'json',
           type: "POST",
           contentType: 'application/json; charset=utf-8',
           processData: false,
-          data: JSON.stringify({'nodes': $('.node_id').toArray().map(x => $(x).text())}),
+          data: JSON.stringify({
+            'nodes': $('.node_id').toArray().map(x => $(x).text()),
+            "directed_search":directed_search
+          }),
           success: function( data, textStatus, jQxhr ){
               // console.log(data);
               drawNetwork(data);
@@ -170,6 +176,9 @@ $( document ).ready(function() {
 
         // URL
         window.history.replaceState({}, '', window.location.pathname);
+        if (directed_search){
+            addQueryParam("directed_search", directed_search)
+        }
         $('.node_id').toArray().map(x => $(x).text()).forEach((item, i) => {
             let node = node_search_data_dict[item];
             console.log(node)
@@ -225,6 +234,11 @@ $( document ).ready(function() {
     var functional_cluster_list = urlParams.getAll('functional_cluster_id');
     var functional_cluster_list = functional_cluster_list.filter(function(v){return v!==''});
     console.log(functional_cluster_list);
+
+    var directed_search = urlParams.get('directed_search')
+    if (directed_search){
+        $( "#directed_search" ).prop( "checked", true );
+    }
 
     if(reaction_list.length>0){
         for (var i = reaction_list.length - 1; i >= 0; i--) {

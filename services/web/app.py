@@ -56,10 +56,13 @@ def search():
     try:
         data = request.get_json(force=False)
         query_nodes = set(data.get('nodes'))
+        directed_search = data.get('directed_search')
+
     except Exception as e:
         return {'error': 'Invalid query data'}
 
-    subgraph = utils.extract_shortest_paths(pss._graph, query_nodes, ignoreDirection=True)
+    ignoreDirection = not directed_search
+    subgraph = utils.extract_query(pss._graph, query_nodes, ignoreDirection=ignoreDirection)
     return utils.graph2json(pss._n, pss._e, subgraph, query_nodes=query_nodes)
 
 

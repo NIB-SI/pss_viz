@@ -170,6 +170,29 @@ def decode_htmlentities(text):
     return RE_HTML_ENTITY.sub(substitute_entity, text)
 
 
+def create_undirected_graph(g):
+
+    g = nx.Graph(g)
+
+    return g
+
+def create_directed_graph(g):
+
+    g = nx.DiGraph(g) # copy
+
+    # remove all "SUBSTRATE" and "TRANSLOCATE_FROM" edges when
+    # form is not metabolite?
+
+    edges_to_remove = [(u, v) for u, v, d in g.edges(data=True) if \
+        (d['label'] in ("SUBSTRATE", "TRANSLOCATE_FROM")) and not (d["source_form"] in ("metabolite"))
+        ]
+
+    g.remove_edges_from(edges_to_remove)
+
+    return g
+
+
+
 def expand_nodes(g, nodes):
     if len(nodes) > 1:
         print('Error : expand not implemented for more than one node')
@@ -201,23 +224,6 @@ def expand_nodes(g, nodes):
     # return g.subgraph([node] + list(ug.neighbors(node))), potentialEdges
     return g.subgraph(all_neighbours), potentialEdges
 
-
-def extract_subgraph(g, nodes, k=2, ignoreDirection=True):
-    nodes = [node for node in nodes if node in g.nodes]
-
-    if ignoreDirection:
-        g = nx.Graph(g)
-    all_neighbours = set(nodes)
-    fromnodes = nodes
-    for i in range(k):
-        neighbours = set(itertools.chain.from_iterable([g.neighbors(node) for node in fromnodes]))  # - set(fromnodes)
-        if not neighbours:
-            break
-        all_neighbours.update(neighbours)
-        fromnodes = neighbours
-    result = g.subgraph(all_neighbours).copy()
-    return result
-
 def reaction_expansion(g, nodes, ignoreDirection=True):
     reactions_to_expand_on = []
     for n in nodes:
@@ -226,45 +232,82 @@ def reaction_expansion(g, nodes, ignoreDirection=True):
 
     print("reaction to expand", len(reactions_to_expand_on))
 
-    expanded_nodes = extract_subgraph(g, reactions_to_expand_on, k=1, ignoreDirection=ignoreDirection).nodes()
+    expanded_nodes = extract_neighbourhood(g, reactions_to_expand_on, k=1, ignoreDirection=ignoreDirection)
     print("reactions expanded", len(expanded_nodes))
 
     return expanded_nodes
 
+def extract_query(g, query_nodes, ignoreDirection=True, search_type=None, k=1):
+    '''
+    k --> neighbourhood distance (number steps)
+    '''
+    # print('--->', query_nodes)
+
+
+    if search_type is None:
+        if len(query_nodes) == 1:
+            search_type = "neighbourhood"
+        else:
+            search_type = "paths"
+
+    if search_type == "neighbourhood":
+        nodes = extract_neighbourhood(g, query_nodes, k=k, ignoreDirection=ignoreDirection)
+    else:
+        nodes = extract_shortest_paths(g, query_nodes, ignoreDirection=ignoreDirection)
+
+    reaction_expanded_nodes = reaction_expansion(g, nodes)
+
+    # print("before", len(paths_nodes))
+    nodes.update(reaction_expanded_nodes)
+    # print("after", len(paths_nodes))
+
+    return g.subgraph(nodes).copy()
+
+def extract_neighbourhood(g, nodes, k=2, ignoreDirection=True):
+    nodes = [node for node in nodes if node in g.nodes]
+
+    if ignoreDirection:
+        searchable_g = create_undirected_graph(g)
+    else:
+        searchable_g = create_directed_graph(g)
+
+    all_neighbours = set(nodes)
+    fromnodes = nodes
+    for _ in range(k):
+        neighbours = set(itertools.chain.from_iterable([searchable_g.neighbors(node) for node in fromnodes]))  # - set(fromnodes)
+        if not neighbours:
+            break
+        all_neighbours.update(neighbours)
+        fromnodes = neighbours
+
+    print(all_neighbours)
+
+    return all_neighbours
 
 def extract_shortest_paths(g, query_nodes, ignoreDirection=True):
     if ignoreDirection:
-        searchable_g = nx.Graph(g)
+        searchable_g = create_undirected_graph(g)
     else:
-        searchable_g = g
+        searchable_g = create_directed_graph(g)
 
-    # print('--->', query_nodes)
-    if len(query_nodes) == 1:
-        if 'Reaction' in g.nodes[list(query_nodes)[0]]['labels']:
-            subgraph = extract_subgraph(g, query_nodes, k=1, ignoreDirection=ignoreDirection)
-        else:
-            subgraph = extract_subgraph(g, query_nodes, k=2, ignoreDirection=ignoreDirection)
-        paths_nodes = subgraph.nodes()
+    paths_nodes = []
+    if ignoreDirection:
+        iterator = itertools.combinations(query_nodes, 2)
     else:
-        paths_nodes = []
-        for fr, to in itertools.combinations(query_nodes, 2):
-            try:
-                paths = [p for p in nx.all_shortest_paths(searchable_g, source=fr, target=to)]
-                # print(paths)
-                paths_nodes.extend([item for path in paths for item in path])
-            except nx.NetworkXNoPath:
-                print('No paths:', fr, to)
-                pass
-        # add back also nodes with no paths
-        # this also covers the case with no paths at all
-        paths_nodes = set(paths_nodes).union(query_nodes)
-        reaction_expanded_nodes = reaction_expansion(g, paths_nodes)
+        iterator = itertools.permutations(query_nodes, 2)
+    for fr, to in iterator:
+        try:
+            paths = [p for p in nx.all_shortest_paths(searchable_g, source=fr, target=to)]
+            # print(paths)
+            paths_nodes.extend([item for path in paths for item in path])
+        except nx.NetworkXNoPath:
+            print('No paths:', g.nodes()[fr]["name"], g.nodes()[to]["name"])
+            pass
+    # add back also nodes with no paths
+    # this also covers the case with no paths at all
+    nodes = set(paths_nodes).union(query_nodes)
 
-        # print("before", len(paths_nodes))
-        paths_nodes.update(reaction_expanded_nodes)
-        # print("after", len(paths_nodes))
-
-    return g.subgraph(paths_nodes).copy()
+    return nodes
 
 
 # def visualize_graphviz(g, path, output='pdf'):
