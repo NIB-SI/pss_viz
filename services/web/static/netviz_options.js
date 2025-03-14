@@ -65,8 +65,8 @@ var netviz_options = {
     },
     physics: {
         enabled: true,
-        solver: 'barnesHut',
 
+        solver: 'barnesHut',
         barnesHut: {
             gravitationalConstant: -5000,
             centralGravity: 0.5,
@@ -74,17 +74,19 @@ var netviz_options = {
             springConstant: 0.16,
             damping: 0.25
         },
+
         stabilization: {
              enabled: true,
-             iterations: 10,
+             iterations: 100,
              fit: true
              // updateInterval: 5,
-         },
+        },
     },
     configure: {
         enabled: false
     },
     layout :{
+        randomSeed: 42,
         improvedLayout: true
     }
 };

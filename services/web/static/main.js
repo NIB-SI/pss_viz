@@ -150,7 +150,6 @@ $( document ).ready(function() {
         }
 
         var directed_search = $("#directed_search").is(":checked")
-        console.log(directed_search)
 
         $.ajax({
           url: "/biomine/search",
@@ -298,20 +297,29 @@ $( document ).ready(function() {
 
 
 function drawNetwork(graphdata){
-     netviz.nodes = new vis.DataSet(graphdata.network.nodes);
-     netviz.edges = new vis.DataSet(graphdata.network.edges);
+    netviz.nodes = new vis.DataSet(graphdata.network.nodes);
+    netviz.edges = new vis.DataSet(graphdata.network.edges);
 
-     // create a network
-     var container = document.getElementById('networkView');
+    // create a network
+    var container = document.getElementById('networkView');
 
-     // provide the data in the vis format
-     var data = {
-         nodes: netviz.nodes,
-         edges: netviz.edges
-     };
+    // provide the data in the vis format
+    var data = {
+        nodes: netviz.nodes,
+        edges: netviz.edges
+    };
 
-    // console.log(data);
     netviz_options['groups'] = graphdata.groups
+
+    if ( $("#hierarchical_layout").is(":checked")){
+    netviz_options['layout']['hierarchical'] = {
+        enabled:true,
+        direction: 'UD'
+      }
+    } else {
+        netviz_options['layout']['hierarchical'] = false
+    }
+
 
     postprocess_edges(data.edges);
     postprocess_nodes(data.nodes, graphdata.groups);
