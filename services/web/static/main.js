@@ -176,7 +176,7 @@ $( document ).ready(function() {
             if (("functional_cluster_id" in node) && (node.functional_cluster_id !=='')){
                 console.log("functional_cluster_id", node)
                 addQueryParam("functional_cluster_id", node.functional_cluster_id)
-            } else if (("reaction_id" in node)){
+            } else if (("reaction_id" in node) && (node.reaction_id !=='')){
                 console.log("reaction_id", node)
                 addQueryParam("reaction_id", node.reaction_id)
             }
