@@ -292,6 +292,9 @@ $( document ).ready(function() {
         else if ($(this).attr('href') == '#json') {
             export_json();
         }
+        else if ($(this).attr('href') == '#reactions') {
+            export_reactions();
+        }
     });
 });
 
@@ -790,6 +793,26 @@ function export_nodes() {
     saveAs(blob, "nodes.csv");
 }
 
+function export_reactions() {
+    if(netviz.nodes==undefined) {
+        vex.dialog.alert('No reactions to export! You need to do a search first.');
+        return;
+    }
+
+    var header = ['reaction_id'];
+
+    var data = [header];
+    netviz.nodes.forEach(function(node, id){
+        if (("reaction_id" in node) && (node.reaction_id !=='')){
+            data.push(node.reaction_id);
+        }
+    })
+
+    var txt = data.join('\n')
+
+    var blob = new Blob([txt], {type: "text/txt;charset=utf-8"});
+    saveAs(blob, "reaction_ids.txt");
+}
 
 
 function export_edges(){
