@@ -351,7 +351,9 @@ function postprocess_edge(item) {
                 ['Source form', item.source_form],
                 ['Target form', item.target_form],
                 ['Identifier', item.target_identifier],
-                ['Identifier', item.source_identifier]
+                ['Identifier', item.source_identifier],
+                ['Identifiers', item.target_identifiers],
+                ['Identifiers', item.source_identifiers]
     ];
 
     let table = '';
