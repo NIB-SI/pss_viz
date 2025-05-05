@@ -126,7 +126,7 @@ $( document ).ready(function() {
           option: function (item, escape) {
             let maxlen = 50;
             let name = '<span class="name"> {} </span>'.format(v.truncate(escape(item.name), maxlen));
-            let functional_cluster_id = item.functional_cluster_id.length>0 ? '<span class="caption"> <strong>fc identifier::</strong> {} </span>'.format(item.functional_cluster_id) : "";
+            let functional_cluster_id = item.functional_cluster_id.length>0 ? '<span class="caption"> <strong>fc identifier:</strong> {} </span>'.format(item.functional_cluster_id) : "";
             let description = item.description.length>0 ? '<span class="caption"> <strong>description:</strong> {} </span>'.format(v.truncate(escape(item.description), maxlen - 'description:'.length)) : "";
             let synonyms = item.synonyms.length>0 ? '<span class="caption"> <strong>synonyms:</strong> {} </span>'.format(v.truncate(escape(item.synonyms), maxlen - 'synonyms:'.length)) : "";
             let evidence_sentence = item.evidence_sentence.length>0 ? '<span class="caption"> <strong>evidence:</strong> {} </span>'.format(v.truncate(escape(item.evidence_sentence), maxlen - 'evidence:'.length)) : "";
@@ -402,7 +402,27 @@ function postprocess_node(item, groups) {
         var [source, identifier] = x.split(":")
         if (source=="doi") {
             s = '<a target="_blank" href="https://doi.org/{}">{}</a>'.format(identifier, x)
-        } else {
+        }
+        else if (source=="pmid") {
+            s = '<a target="_blank" href="https://pubmed.ncbi.nlm.nih.gov/{}">{}</a>'.format(identifier, x)
+        }
+        else if (source=="ncbitaxion") {
+            s = '<a target="_blank" href="https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id={}">{}</a>'.format(identifier, x)
+        }
+        else if (source=="chebi") {
+            s = '<a target="_blank" href="https://www.ebi.ac.uk/chebi/beta/CHEBI:{}">{}</a>'.format(identifier, x)
+        }
+        else if (source=="pubchem") {
+            s = '<a target="_blank" href="https://pubchem.ncbi.nlm.nih.gov/compound/{}">{}</a>'.format(identifier, x)
+        }
+        else if (source=="kegg") {
+            s = '<a target="_blank" href=" https://www.genome.jp/dbget-bin/www_bget?{}">{}</a>'.format(identifier, x)
+        }
+        else if (source=="go") {
+            s = '<a target="_blank" href=" https://amigo.geneontology.org/amigo/term/GO:{}">{}</a>'.format(identifier, x)
+        }
+        // TODO - gmm, metacyc, aracyc, ...
+        else {
             s = '{}'.format(x)
         }
         external_links.push(s)
@@ -421,12 +441,17 @@ function postprocess_node(item, groups) {
             })
             s = hrefs.join(", ")
 
-            params = jQuery.param({list:item._homologues[sp]})
-            s += '<br><br>  <p><a target="_blank" href="https://knetminer.com/araknet/genepage?{}">Search for {}_homologues in KnetMiner</a></p>'.format(params, sp)
+            knetminer_params = jQuery.param({list:item._homologues[sp]})
+
         } else {
-            s = v.truncate(item._homologues[sp], maxlen)
+            s = v.truncate(item._homologues[sp], maxlen);
+            knetminer_params = [];
         }
+
         data.push(['{}_homologues'.format(sp), s])
+
+        data.push(['KnetMiner', item._homologues[sp].length > 0 ? '<p><a target="_blank" href="https://app.knetminer.com/plants-lite/Arabidopsis_thaliana?{}">Search for {}_homologues in KnetMiner</a></p>'.format(knetminer_params, sp) : ''])
+
         has_homologues = true
     }
 
