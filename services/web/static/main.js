@@ -150,6 +150,7 @@ $( document ).ready(function() {
         }
 
         var directed_search = $("#directed_search").is(":checked")
+        var force_neighbourhood = $("#force_neighbourhood").is(":checked");
 
         $.ajax({
           url: "/biomine/search",
@@ -159,7 +160,8 @@ $( document ).ready(function() {
           processData: false,
           data: JSON.stringify({
             'nodes': $('.node_id').toArray().map(x => $(x).text()),
-            "directed_search":directed_search
+            "directed_search":directed_search,
+            "force_neighbourhood":force_neighbourhood
           }),
           success: function( data, textStatus, jQxhr ){
               // console.log(data);
@@ -177,6 +179,9 @@ $( document ).ready(function() {
         window.history.replaceState({}, '', window.location.pathname);
         if (directed_search){
             addQueryParam("directed_search", directed_search)
+        }
+        if (force_neighbourhood){
+            addQueryParam("force_neighbourhood", force_neighbourhood)
         }
         $('.node_id').toArray().map(x => $(x).text()).forEach((item, i) => {
             let node = node_search_data_dict[item];
@@ -237,6 +242,11 @@ $( document ).ready(function() {
     var directed_search = urlParams.get('directed_search')
     if (directed_search){
         $( "#directed_search" ).prop( "checked", true );
+    }
+
+    var force_neighbourhood = urlParams.get('force_neighbourhood')
+    if (force_neighbourhood){
+        $( "#force_neighbourhood" ).prop( "checked", true );
     }
 
     if(reaction_list.length>0){

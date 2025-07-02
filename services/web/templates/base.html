@@ -68,8 +68,11 @@
            <div style="width:100%;">
               <h5>Queries</h5>
                 <p>Find entities (including reactions) in PSS using the searchbox, add them to the query, and then click "Search!" to extract the subnetwork.  </p>
-                <p>If the query contains only one node, a neighbourhood is returned. Otherwise, the undirected shortest paths between all pairs of nodes are merged and returned.</p>
-                <p>Note that the shortest path does not take into account the direction of the edges. </p>
+                <p>By default, if the query contains only one node, a neighbourhood is returned. Otherwise, the undirected shortest paths between all pairs of nodes are merged and returned.</p>
+                <p>To force a neighbourhood search when entering more than one entity, tick the "Force a neighbourhood search" checkbox in the "Search parameters" dropdown.</p>
+                <p>By default, the shortest path search does not take into account the direction of the edges.
+                    To force the search to be directed, tick the "Directed search" checkbox in the "Search parameters" dropdown.</p>
+                </p>
               <h5>Network tips</h5>
                 <p>Right click on an edge or node to access its context menu.</p>
                 <p>Double click on a node to expand its neighbours (reactions are already expanded). </p>

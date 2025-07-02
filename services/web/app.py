@@ -57,12 +57,21 @@ def search():
         data = request.get_json(force=False)
         query_nodes = set(data.get('nodes'))
         directed_search = data.get('directed_search')
+        force_neighbourhood = data.get('force_neighbourhood', False)
 
     except Exception as e:
         return {'error': 'Invalid query data'}
 
     ignoreDirection = not directed_search
-    subgraph = utils.extract_query(pss._graph, query_nodes, ignoreDirection=ignoreDirection)
+
+    if force_neighbourhood:
+        # force a neighbourhood search
+        search_type = "neighbourhood"
+    else:
+        # let the search type be determined by the query
+        search_type = None
+
+    subgraph = utils.extract_query(pss._graph, query_nodes, ignoreDirection=ignoreDirection, search_type=search_type)
     return utils.graph2json(pss._n, pss._e, subgraph, query_nodes=query_nodes)
 
 
