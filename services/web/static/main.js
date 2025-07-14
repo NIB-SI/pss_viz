@@ -461,7 +461,7 @@ function postprocess_node(item, groups) {
 
             // add identifiers individually to CKN params list
             ckn_params = jQuery.param({identifier:item._homologues[sp].split(", ").map(x => x.trim())}, true)
-            external_links.push(['CKN ({})'.format(sp), '/ckn?{}'.format(ckn_params)])
+            external_links.push(['CKN ({})'.format(sp), '/ckn/?{}'.format(ckn_params)])
 
 
         } else {
