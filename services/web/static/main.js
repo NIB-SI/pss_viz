@@ -33,6 +33,9 @@ var select = null;
 
 format.extend (String.prototype, {});
 
+function truncateString(str, length) {
+    return str.length > length ? str.substring(0, length - 3) + '...' : str
+}
 
 // Below from https://stackoverflow.com/a/78550846/4996681
 function addQueryParam(key, value) {
@@ -411,59 +414,92 @@ function postprocess_node(item, groups) {
     for (let x of item.external_links) {
         var [source, identifier] = x.split(":")
         if (source=="doi") {
-            s = '<a target="_blank" href="https://doi.org/{}">{}</a>'.format(identifier, x)
+            link = 'https://doi.org/{}'.format(identifier)
         }
         else if (source=="pmid") {
-            s = '<a target="_blank" href="https://pubmed.ncbi.nlm.nih.gov/{}">{}</a>'.format(identifier, x)
+            link = 'https://pubmed.ncbi.nlm.nih.gov/{}'.format(identifier)
         }
         else if (source=="ncbitaxion") {
-            s = '<a target="_blank" href="https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id={}">{}</a>'.format(identifier, x)
+            link = 'https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id={}'.format(identifier)
         }
         else if (source=="chebi") {
-            s = '<a target="_blank" href="https://www.ebi.ac.uk/chebi/beta/CHEBI:{}">{}</a>'.format(identifier, x)
+            link = 'https://www.ebi.ac.uk/chebi/beta/CHEBI:{}'.format(identifier)
         }
         else if (source=="pubchem") {
-            s = '<a target="_blank" href="https://pubchem.ncbi.nlm.nih.gov/compound/{}">{}</a>'.format(identifier, x)
+            link = 'https://pubchem.ncbi.nlm.nih.gov/compound/{}'.format(identifier)
         }
         else if (source=="kegg") {
-            s = '<a target="_blank" href=" https://www.genome.jp/dbget-bin/www_bget?{}">{}</a>'.format(identifier, x)
+            link = 'https://www.genome.jp/dbget-bin/www_bget?{}'.format(identifier)
         }
         else if (source=="go") {
-            s = '<a target="_blank" href=" https://amigo.geneontology.org/amigo/term/GO:{}">{}</a>'.format(identifier, x)
+            link = 'https://amigo.geneontology.org/amigo/term/GO:{}'.format(identifier)
         }
         // TODO - gmm, metacyc, aracyc, ...
         else {
-            s = '{}'.format(x)
+            link=null
         }
-        external_links.push(s)
+        external_links.push([x, link])
     }
-    data.push(['External links', external_links.join("<br>")])
 
     has_homologues = false
     for (let sp in item._homologues) {
         // s = v.truncate(item._homologues[sp], maxlen)
         if (sp=="ath") {
             hrefs = []
-            // console.log(item._homologues[sp])
+
+
+            // add link to TAIR per homologue in ath_homologues
             item._homologues[sp].split(", ").forEach(function (item, index) {
                 // console.log(item)
                 hrefs.push('<a target="_blank" href="https://www.arabidopsis.org/servlets/TairObject?name={}&type=locus">{}</a>  '.format(item, item))
             })
             s = hrefs.join(", ")
 
+            // add identifier to KnetMiner params list
             knetminer_params = jQuery.param({list:item._homologues[sp]})
+            external_links.push(['Knetminer ({})'.format(sp), 'https://app.knetminer.com/plants-lite/Arabidopsis_thaliana?{}'.format(knetminer_params)])
+
+            // add identifiers individually to CKN params list
+            ckn_params = jQuery.param({identifier:item._homologues[sp].split(", ").map(x => x.trim())}, true)
+            external_links.push(['CKN ({})'.format(sp), '/ckn?{}'.format(ckn_params)])
+
 
         } else {
             s = v.truncate(item._homologues[sp], maxlen);
             knetminer_params = [];
+            ckn_params = [];
         }
 
         data.push(['{}_homologues'.format(sp), s])
 
-        data.push(['KnetMiner', item._homologues[sp].length > 0 ? '<p><a target="_blank" href="https://app.knetminer.com/plants-lite/Arabidopsis_thaliana?{}">Search for {}_homologues in KnetMiner</a></p>'.format(knetminer_params, sp) : ''])
+
+
 
         has_homologues = true
     }
+
+    console.log(external_links)
+
+    // join each [title, url] in externalinks as styled button links
+    // title upto n characters long
+    title_length = 20;
+    external_links_str = '<div class="d-grid gap-2">';
+    external_links = external_links.filter(x => x[0] != null).map(x => {
+        let title = x[0];
+        if (title.length > title_length) {
+            title = truncateString(title, title_length);
+        }
+        let url = x[1];
+        if (url == null || url == undefined) {
+            s = '<button class="btn btn-outline-success btn-sm" disabled>{}</button>'.format(title);
+        } else {
+            s = '<a target="_blank" class="btn btn-outline-success btn-sm" href="{}">{}</a>'.format(url, title);
+        }
+        return s;
+    });
+    external_links_str += external_links.join(' ') + '</div>';
+
+    data.push(['External links', external_links_str]);
 
     let table = '';
 
