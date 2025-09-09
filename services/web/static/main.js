@@ -49,6 +49,13 @@ function addQueryParam(key, value) {
     history.pushState({}, '', url);
 }
 
+function parseExternalLink(s) {
+    var i = s.indexOf(':');
+    var source = s.slice(0, i);
+    var identifier = s.slice(i+1);
+    return [source, identifier]
+}
+
 
 $(window).resize(function() {
     scale();
@@ -412,7 +419,7 @@ function postprocess_node(item, groups) {
 
     external_links = [];
     for (let x of item.external_links) {
-        var [source, identifier] = x.split(":")
+        var [source, identifier] = parseExternalLink(x)
         if (source=="doi") {
             link = 'https://doi.org/{}'.format(identifier)
         }
