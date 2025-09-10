@@ -4,5 +4,5 @@ flask-cors==3.0.*
 gunicorn==20.1.*
 
 requests
-Flask-Session==0.5.*
-redis==3.5.3
+Flask-Session==0.8.0
+redis==6.2.0

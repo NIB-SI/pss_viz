@@ -137,18 +137,17 @@ def create_app(test_config=None):
     rs = redis.Redis(host='redis', port=rport)
     try:
         rs.ping()
+        print("Redis is running!")
     except redis.exceptions.ConnectionError:
         print(f'Warning: Redis is not running on port {rport}. Not using this setting.')
     else:
         app.config.from_mapping(
             # Flask Session settings
             SESSION_TYPE = 'redis',
-            SESSION_REDIS = redis.Redis(host='redis', port=rport)
+            SESSION_REDIS = rs,
         )
     sess.init_app(app)
-
     app.register_blueprint(bp)
-
     return app
 
 app = create_app()
