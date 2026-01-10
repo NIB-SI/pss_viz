@@ -93,7 +93,6 @@ NODE_STYLE = {
         'shape': 'box',
         'color': {'background': '#cd3f40', 'border': '#a62b2c'}
     },
-    # every one else,
     'Metabolite': {
         'shape': 'box',
         'color': {'background': '#fff0f5', 'border': '#ff6799'}
@@ -111,6 +110,7 @@ NODE_STYLE = {
                   'multi': 'html'},
         'widthConstraint': 85
     },
+    # every one else,
     'default': {
         'shape': 'box',
         'color': {'background': 'White', 'border': '#6c7881'}
@@ -446,6 +446,10 @@ def graph2json(nodelist, edgelist, g, query_nodes=None):
             key = f'{sp}_homologues'
             if key in attrs:
                 has_group = False
+
+                nodeData['color'] = {'background': groups_json[group]['color']['background'],
+                                     'border': groups_json[group]['color']['border']}
+
                 nodeData['_homologues'][sp] = ', '.join(attrs[key])
 
         if nodeid in query_nodes:

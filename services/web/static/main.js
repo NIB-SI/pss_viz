@@ -545,11 +545,13 @@ function postprocess_node(item, groups) {
             stroke_width='3';
         }
 
-        var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="100">' +
+        // wider than tall to accommodate names outside of circle
+        // any wider and the selection zone falls outside of node
+        var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="150" height="100">' +
             '<circle fill="' + fill + '"' +
             ' stroke="' + stroke + '"' +
             ' stroke-width="' + stroke_width + '"' +
-            ' cx="150" cy="50" r="45"/>' +
+            ' cx="75" cy="50" r="50"/>' +
             '<text x="50%" y="50%" text-anchor="middle" font-family="arial" font-size="24" dominant-baseline="middle">' +
             item.label +
             '</text>' +
@@ -560,9 +562,8 @@ function postprocess_node(item, groups) {
 
         var url = "data:image/svg+xml;charset=utf-8,"+ encodeURIComponent(svg);
 
-
         item.image = url;
-        item.shape = 'image'
+        item.shape = 'circularImage'
         item.font = {size: 8, align: 'center', vadjust:-8}
         item.size = 30
         item.label = annotations

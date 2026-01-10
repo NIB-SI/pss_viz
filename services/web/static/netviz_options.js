@@ -4,7 +4,7 @@ function hover_edge_label(values, id, selected, hovering) {
 }
 
 function hover_edge(values, id, selected, hovering) {
-  values.width = values.width * 1.5;
+  values.width = values.width * 2;
 }
 
 function hover_node_label(values, id, selected, hovering) {
@@ -12,7 +12,7 @@ function hover_node_label(values, id, selected, hovering) {
 }
 
 function hover_node(values, id, selected, hovering) {
-  values.borderWidth = 5;
+  values.borderWidth = values.borderWidth+5;
 }
 
 var netviz_options = {
@@ -20,12 +20,18 @@ var netviz_options = {
                   navigationButtons: true,
                   multiselect: true,
                   tooltipDelay: $("#showTooltipsCbox").prop("checked") ? 200 : 3600000,  // effectively disabled by very long delay if unchecked
+                  hoverConnectedEdges: false,
+                  selectConnectedEdges: false,
                 },
     edges: {
-        arrows: 'to',
+        arrows: {
+            'to': {
+                enabled: true
+            }
+        },
         smooth: {
             enabled: true,
-            // type: 'continuous'
+            // type: 'continuous',
             type: 'dynamic',
             forceDirection: 'none'
         },
@@ -43,9 +49,9 @@ var netviz_options = {
           from: 0,
           to: -5
         },
-        arrowStrikethrough: true,
-        hoverWidth: 3,
-        color: {inherit: false}
+        width: 2,
+        color: {inherit: false},
+        arrowStrikethrough: true //true = the edge stops at the arrow
     },
     nodes: {
         shape: 'box',
@@ -61,7 +67,7 @@ var netviz_options = {
         chosen: {
             node: hover_node,
             label: false,
-        }
+        },
     },
     physics: {
         enabled: true,
