@@ -146,7 +146,7 @@ def create_app(test_config=None):
             SESSION_TYPE = 'redis',
             SESSION_REDIS = rs,
         )
-    sess.init_app(app)
+        sess.init_app(app)
     app.register_blueprint(bp)
     return app
 
