@@ -387,7 +387,8 @@ function postprocess_edge(item) {
         }
     });
     table = header + table + footer;
-    item.title = htmlTitle(table);
+    title = "<div><strong>Edge info table</strong></div>"
+    item.title = htmlTitle(title + table);
     return item;
 }
 
@@ -520,7 +521,12 @@ function postprocess_node(item, groups) {
         }
     });
     table = header + table + footer;
-    item.title = htmlTitle(table);
+    if (item.type == "Reaction"){
+        title = "<div><strong>Reaction info table</strong></div>"
+    } else {
+        title = "<div><strong>Node info table</strong></div>"
+    }
+    item.title = htmlTitle(title + table);
 
 
     if (has_homologues){
