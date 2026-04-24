@@ -421,12 +421,12 @@ function postprocess_edges(edges) {
 
 function postprocess_node(item, groups) {
 
-    let maxlen = 300;
+    let maxlen = 500;
     let header = '<table class="table table-striped table-bordered tooltip_table w-100" style="table-layout: fixed;">\
                   <tbody>';
     let footer = '</tbody>\
                   </table>';
-    let data = [['Name', v.truncate(item.name, 20)],
+    let data = [['Name', v.truncate(item.name, 30)],
                 ['Type', item.type],
                 ['Reaction type', item.reaction_type],
                 ['FunctionalCluster id', item.functional_cluster_id],
@@ -524,7 +524,7 @@ function postprocess_node(item, groups) {
 
 
         } else {
-            s = v.truncate(item._homologues[sp], maxlen);
+            s = item._homologues[sp];
             knetminer_params = [];
             ckn_params = [];
         }
