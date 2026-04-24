@@ -99,6 +99,22 @@ body {
   display: none;
 }
 
+
+/*allow select test on these buttons*/
+.btn.btn-text {
+  -ms-user-select: all;
+  -webkit-user-select: all;
+  -moz-user-select: all;
+  user-select: all;
+}
+
+/*btn inside vex */
+.vex-content .btn {
+    margin: 5px;
+}
+
+
+
 .list-group-item {
     padding: 0.3rem 0.3rem;
     display: block;
@@ -165,17 +181,28 @@ body {
   z-index: 99;
 }
 
+.my-nav-link, .my-nav-link:focus{
+  color: floralwhite;
+  background-color: #00672c;
+}
+
 .nav-link, .nav-link:focus{
   color: floralwhite;
   background-color: #00672c;
 }
 
 .nav-link:hover  {
+  color: floralwhite;
+}
+
+
+
+.my-nav-link:hover  {
   color: black;
   background-color: #fff;
 }
 
-.nav-tabs > .nav-link{
+.nav-tabs > .my-nav-link{
   color: gray;
 }
 
@@ -202,4 +229,73 @@ body {
   left: 0;
   width: 100%;
   z-index: 99;
+}
+
+
+
+
+/*--- tooltips*/
+.node_tooltip_flex {
+    max-width: 700px;
+}
+
+.node_tooltip_flex .row{
+    padding-bottom: 5px;
+}
+
+.node_tooltip_flex .key {
+    font-weight: bold;
+}
+
+.node_tooltip_flex .value {
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.collapsible-header {
+    cursor: pointer;
+    background: #f5f5f5;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+}
+
+.collapsible-body {
+    display: none;
+    margin-top: 4px;
+}
+
+.collapsible.open .collapsible-body {
+    display: block;
+}
+
+.line {
+    display: block;
+    margin-left: 4px;
+}
+
+.node_hover_tooltip {
+    font-size: 11px;
+    max-width: 300px;
+}
+
+.hover_row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+.hover_key {
+    font-weight: bold;
+    opacity: 0.8;
+    flex: 0 0 120px;
+}
+
+.hover_value {
+    flex: 1;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

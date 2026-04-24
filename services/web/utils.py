@@ -20,6 +20,14 @@ SPECIES = [
     "nta",
     "ptr",
     "vvi",
+    'mdo',
+    'pdul',
+    'parm',
+    'pavi',
+    'pcer',
+    'ppe',
+    'psib',
+    'pcox',
 ]
 
 
@@ -205,7 +213,6 @@ def expand_nodes(g, nodes):
     else:
         k = 2
 
-
     # find also neighbours on the second level to connect to the rest of the graph (if possible)
     all_neighbours = set(nodes)
     fromnodes = nodes
@@ -292,8 +299,10 @@ def extract_shortest_paths(g, query_nodes, ignoreDirection=True):
 
     paths_nodes = []
     if ignoreDirection:
+        # use combinations for undirected graph (order does not matter)
         iterator = itertools.combinations(query_nodes, 2)
     else:
+        # use permutations for directed graph (order matters, use both A --> B and B --> A)
         iterator = itertools.permutations(query_nodes, 2)
     for fr, to in iterator:
         try:
@@ -377,8 +386,6 @@ def parseJSON(url=None, path=None, headers={}):
         else:
             print('Warning: strangely formatted label: ', label)
         node['properties']['label'] = label
-
-
 
         g.add_node(node['id'], labels=node['labels'], **node['properties'])
 

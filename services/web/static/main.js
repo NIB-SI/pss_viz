@@ -10,6 +10,14 @@ SPECIES = [
     "nta",
     "ptr",
     "vvi",
+    'mdo',
+    'pdul',
+    'parm',
+    'pavi',
+    'pcer',
+    'ppe',
+    'psib',
+    'pcox'
 ]
 
 NODE_ANNOT_DATA = ['id', 'name', 'short_name', 'label', 'type','description','synonyms','evidence_sentence','external_links','reaction_type', 'functional_cluster_id', 'reaction_id'];
@@ -239,6 +247,16 @@ $( document ).ready(function() {
     scale();
     initContextMenus();
 
+
+    $('#showSpecies').change(function() {
+        toggleSpeciesLabels();
+    });
+
+    $(document).on('click', '.collapsible-header', function() {
+        $(this).parent().toggleClass('open');
+    });
+
+    // create network based on URL parameters
     urlParams = new URLSearchParams(window.location.search);
 
     var reaction_list = urlParams.getAll('reaction_id');
@@ -352,6 +370,8 @@ function drawNetwork(graphdata){
 
     netviz.network.on("doubleClick", onDoubleClick);
 
+    toggleSpeciesLabels()
+
     // network.on("stabilized", function (params) {
     //     network.fit({animation: {duration: 500}});
     //    });
@@ -406,7 +426,7 @@ function postprocess_node(item, groups) {
                   <tbody>';
     let footer = '</tbody>\
                   </table>';
-    let data = [['Name', item.name],
+    let data = [['Name', v.truncate(item.name, 20)],
                 ['Type', item.type],
                 ['Reaction type', item.reaction_type],
                 ['FunctionalCluster id', item.functional_cluster_id],
@@ -418,7 +438,7 @@ function postprocess_node(item, groups) {
                 ['Pathway', item.pathway]
     ]
 
-    external_links = [];
+    external_links = []; // have you heard of identifiers.org??
     for (let x of item.external_links) {
         var [source, identifier] = parseExternalLink(x)
         if (source=="doi") {
@@ -442,11 +462,42 @@ function postprocess_node(item, groups) {
         else if (source=="go") {
             link = 'https://amigo.geneontology.org/amigo/term/GO:{}'.format(identifier)
         }
-        // TODO - gmm, metacyc, aracyc, ...
+        else if (source=="metacyc") {
+            link = 'https://metacyc.org/META/new-image?object={}'.format(identifier.toUpperCase())
+        }
+        else if (source=="aracyc") {
+            link = 'https://pmn.plantcyc.org/ARA/new-image?object={}'.format(identifier.toUpperCase())
+        }
+        else if (source=="ec") {
+            link = ' https://enzyme.expasy.org/EC/{}'.format(identifier)
+        }
+        // // TODO - gmm...
         else {
             link=null
         }
         external_links.push([x, link])
+    }
+
+    if (external_links.length>0){
+        console.log(external_links)
+        // join each [title, url] in externalinks as styled button links
+        // title upto n characters long
+        title_length = 20;
+        external_links = external_links.filter(x => x[0] != null).map(x => {
+            let title = x[0];
+            if (title.length > title_length) {
+                title = truncateString(title, title_length);
+            }
+            let url = x[1];
+            if (url == null || url == undefined) {
+                s = '<a class="btn btn-outline-success disabled btn-sm btn-text">{}</a>'.format(title);
+            } else {
+                s = '<a target="_blank" class="btn btn-success btn-sm btn-text" href="{}">{}</a>'.format(url, title);
+            }
+            return s;
+        });
+        external_links_str = '<div class="d-grid gap-2 d-md-block">' + external_links.join(' ') + '</div>';
+        data.push(['External links', external_links_str]);
     }
 
     has_homologues = false
@@ -478,58 +529,21 @@ function postprocess_node(item, groups) {
             ckn_params = [];
         }
 
-        data.push(['{}_homologues'.format(sp), s])
+        data.push(['{}_homologues'.format(sp), s]);
 
-
-
-
-        has_homologues = true
+        item.has_homologues = true;
     }
 
-    console.log(external_links)
-
-    // join each [title, url] in externalinks as styled button links
-    // title upto n characters long
-    title_length = 20;
-    external_links_str = '<div class="d-grid gap-2">';
-    external_links = external_links.filter(x => x[0] != null).map(x => {
-        let title = x[0];
-        if (title.length > title_length) {
-            title = truncateString(title, title_length);
-        }
-        let url = x[1];
-        if (url == null || url == undefined) {
-            s = '<button class="btn btn-outline-success btn-sm" disabled>{}</button>'.format(title);
-        } else {
-            s = '<a target="_blank" class="btn btn-outline-success btn-sm" href="{}">{}</a>'.format(url, title);
-        }
-        return s;
-    });
-    external_links_str += external_links.join(' ') + '</div>';
-
-    data.push(['External links', external_links_str]);
-
-    let table = '';
-
-    data.forEach(function (item, index) {
-        if (item[1].length>0) {
-            let row = '<tr>\
-                            <td><strong>{}</strong></td>\
-                            <td class="text-wrap" style="width: 100%; display: inline-block; word-wrap: break-word; ">{}</td>\
-                       </tr>'.format(item[0], item[1]);
-            table += row;
-        }
-    });
-    table = header + table + footer;
     if (item.type == "Reaction"){
-        title = "<div><strong>Reaction info table</strong></div>"
+        title = "<div><h4>Reaction info table</h4></div>"
     } else {
-        title = "<div><strong>Node info table</strong></div>"
+        title = "<div><h4>Node info table</h4></div>"
     }
-    item.title = htmlTitle(title + table);
 
+    item.contextData = htmlTitle(title + renderNodeContextMenu(data));
+    item.title = htmlTitle(title + renderNodeHoverTooltip(data));
 
-    if (has_homologues){
+    if (item.has_homologues){
         annotations = ''
         for (let sp in item._homologues) {
             annotations = annotations + " " + sp + " "
@@ -586,6 +600,90 @@ function htmlTitle(html) {
   return container;
 }
 
+
+function renderNodeContextMenu(data) {
+    let html = '<div class="node_tooltip_flex">';
+
+    data.forEach(function(item) {
+        if (item[1] && item[1].length > 0) {
+
+            const isHomologues = typeof item[0] === "string" && item[0].endsWith("_homologues");
+
+            if (isHomologues) {
+                let values = Array.isArray(item[1])
+                    ? item[1]
+                    : item[1].split(/,\s*/).map(v => v.trim());
+
+                let content = values.map(v => `<div class="line">${v}</div>`).join('');
+
+                html += `
+                    <div class="key">${item[0]}</div>
+                    <div class="value">
+                        <div class="collapsible">
+                            <div class="collapsible-header">
+                                ${values.length} entries
+                            </div>
+                            <div class="collapsible-body">
+                                ${content}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // IMPORTANT: render as-is (no splitting!)
+                html += `
+                    <div class="key">${item[0]}</div>
+                    <div class="value">${item[1]}</div>
+                `;
+            }
+        }
+    });
+
+    html += '</div>';
+    return html;
+}
+
+function renderNodeHoverTooltip(data) {
+    let html = '<div class="node_hover_tooltip">';
+
+    data.forEach(function(item) {
+        if (!item[1] || item[1].length === 0) return;
+
+        const key = item[0];
+
+        let value = item[1];
+
+        // flatten arrays / comma strings
+        if (Array.isArray(value)) {
+            value = value.join(', ');
+        } else if (typeof value === "string") {
+            value = value.replace(/\s+/g, ' ').trim();
+        }
+
+        // strip HTML (important for hover performance + safety)
+        value = value
+            .replace(/<[^>]*>/g, '')   // remove tags
+            .slice(0, 120);            // truncate for hover
+
+        if (key.endsWith("_homologues")) {
+            value = `${value.split(',').length} entries: ${value}`;
+        }
+
+        html += `
+            <div class="hover_row">
+                <span class="hover_key">${key}</span>
+                <span class="hover_value">${value}</span>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    return html;
+}
+
+
+
+
 function scale() {
     $('#networkView').height(verge.viewportH()-80);
     $('#networkView').width($('#networkViewContainer').width());
@@ -597,6 +695,26 @@ function freezeNodes(state){
         netviz.nodes.update({id: id, fixed: state});
     });
     netviz.network.startSimulation();
+}
+
+
+function toggleSpeciesLabels() {
+    netviz.speciesLabelsVisible = $('#showSpecies').is(':checked');
+
+    let updates = [];
+
+    netviz.nodes.forEach(function(node) {
+        if (node.has_homologues) {
+            updates.push({
+                id: node.id,
+                font: {
+                    size: netviz.speciesLabelsVisible ? 8 : 0
+                }
+            });
+        }
+    });
+
+    netviz.nodes.update(updates);
 }
 
 function onDragStart(obj) {
@@ -625,7 +743,7 @@ function onDoubleClick (obj) {
 }
 
 function formatNodeInfoVex(nid) {
-    return netviz.nodes.get(nid).title;
+    return netviz.nodes.get(nid).contextData;
 }
 
 function formatEdgeInfoVex(nid) {
@@ -695,6 +813,8 @@ function expandNode(nid) {
                       newCounter += 1;
                   }
               })
+
+              toggleSpeciesLabels()
 
               if (newCounter==0) {
                   vex.dialog.alert('No nodes or edges can be added.');
