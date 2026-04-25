@@ -478,28 +478,6 @@ function postprocess_node(item, groups) {
         external_links.push([x, link])
     }
 
-    if (external_links.length>0){
-        console.log(external_links)
-        // join each [title, url] in externalinks as styled button links
-        // title upto n characters long
-        title_length = 20;
-        external_links = external_links.filter(x => x[0] != null).map(x => {
-            let title = x[0];
-            if (title.length > title_length) {
-                title = truncateString(title, title_length);
-            }
-            let url = x[1];
-            if (url == null || url == undefined) {
-                s = '<a class="btn btn-outline-success disabled btn-sm btn-text">{}</a>'.format(title);
-            } else {
-                s = '<a target="_blank" class="btn btn-success btn-sm btn-text" href="{}">{}</a>'.format(url, title);
-            }
-            return s;
-        });
-        external_links_str = '<div class="d-grid gap-2 d-md-block">' + external_links.join(' ') + '</div>';
-        data.push(['External links', external_links_str]);
-    }
-
     has_homologues = false
     for (let sp in item._homologues) {
         // s = v.truncate(item._homologues[sp], maxlen)
@@ -532,6 +510,28 @@ function postprocess_node(item, groups) {
         data.push(['{}_homologues'.format(sp), s]);
 
         item.has_homologues = true;
+    }
+
+    if (external_links.length>0){
+        console.log(external_links)
+        // join each [title, url] in externalinks as styled button links
+        // title upto n characters long
+        title_length = 20;
+        external_links = external_links.filter(x => x[0] != null).map(x => {
+            let title = x[0];
+            if (title.length > title_length) {
+                title = truncateString(title, title_length);
+            }
+            let url = x[1];
+            if (url == null || url == undefined) {
+                s = '<a class="btn btn-outline-success disabled btn-sm btn-text">{}</a>'.format(title);
+            } else {
+                s = '<a target="_blank" class="btn btn-success btn-sm btn-text" href="{}">{}</a>'.format(url, title);
+            }
+            return s;
+        });
+        external_links_str = '<div class="d-grid gap-2 d-md-block">' + external_links.join(' ') + '</div>';
+        data.push(['External links', external_links_str]);
     }
 
     if (item.type == "Reaction"){
