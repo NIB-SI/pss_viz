@@ -192,7 +192,7 @@ def create_directed_graph(g):
     # form is not metabolite?
 
     edges_to_remove = [(u, v) for u, v, d in g.edges(data=True) if \
-        (d['label'] in ("SUBSTRATE", "TRANSLOCATE_FROM")) and not (d["source_form"] in ("metabolite"))
+        (d['label'] in ("SUBSTRATE", "TRANSLOCATE_FROM")) and d["form"] != "metabolite"
         ]
 
     g.remove_edges_from(edges_to_remove)
@@ -208,7 +208,7 @@ def expand_nodes(g, nodes):
     ug = nx.Graph(g)
 
     # only double expand not Reactions
-    if 'Reaction' in g.nodes[node]['labels']:
+    if is_reaction(g.nodes[node]):
         k = 1
     else:
         k = 2
@@ -234,7 +234,7 @@ def expand_nodes(g, nodes):
 def reaction_expansion(g, nodes, ignoreDirection=True):
     reactions_to_expand_on = []
     for n in nodes:
-        if 'Reaction' in g.nodes[n]['labels']:
+        if is_reaction(g.nodes[n]):
             reactions_to_expand_on.append(n)
 
     print("reaction to expand", len(reactions_to_expand_on))
@@ -324,80 +324,68 @@ def extract_shortest_paths(g, query_nodes, ignoreDirection=True):
 #     nx.drawing.nx_pydot.write_dot(g, dotfile)
 #     subprocess.call(['dot', '-T{}'.format(output), dotfile, '-o', '{}.{}'.format(path, output)])  # , cwd=outdir)
 
+# the fields of an edge sent to the browser (the reaction graph's edge fields)
+EDGE_ATTRIBUTES = ['role', 'location', 'location_putative', 'organ', 'organ_putative', 'form', 'identifiers']
+
+# style groups of the node types that have none of their own
+GROUP = {'reaction': 'Reaction', 'MetaboliteFamily': 'Metabolite'}
+
+
+def node_group(node_type):
+    return GROUP.get(node_type, node_type)
+
+
+def is_reaction(attrs):
+    return attrs.get('node_type') == 'reaction'
+
+
 def parseJSON(url=None, path=None, headers={}):
-    '''Try url first, if failed, fall back to path
+    '''The PSS reaction graph (pss-export's reaction-graph-json: {"nodes": [...], "edges": [...]}), from
+    url, or if that fails, from path. Nodes are keyed by their id (entity name or reaction id). Returns
+    nodes, edges, the graph, and whether it is the local backup (path).
 
     Graph is directed (for orientation of edges in viz), but needs to be
     undirected in any queries.
     '''
 
-    nodes = []
-    edges = []
-    g = nx.DiGraph()
-
     if not (path or url):
         raise Exception("ERROR: at least path or url")
 
-    success = False
+    data = None
     if url:
         try:
             response = requests.get(url, headers=headers)
             if response.ok:
-                success = True
-                for line in response.text.split("\n"):
-                    line = json.loads(line)
-                    if line['type'] == 'node':
-                        nodes.append(line)
-                    elif line['type'] == 'relationship':
-                        edges.append(line)
-                    else:
-                        raise ValueError('Unknown line')
-                    # print(line)
-        except requests.exceptions.ConnectionError as e:
-            print(f"Could not fetch file from {url}. Using a local copy.")
-            # raise e
+                data = response.json()
+        except (requests.exceptions.ConnectionError, ValueError) as e:
+            print(f"Could not fetch the reaction graph from {url} ({e}). Using a local copy.")
 
-    if not success:
+    backup = data is None
+    if backup:
         with open(path) as fp:
-            for line in fp:
-                # current_app.logger.info(line)
-                line = json.loads(line)
-                if line['type'] == 'node':
-                    nodes.append(line)
-                elif line['type'] == 'relationship':
-                    edges.append(line)
-                else:
-                    raise ValueError('Unknown line')
-                # print(line)
+            data = json.load(fp)
 
-    for node in nodes:
-        # g.add_node(node['id'], name=node['properties']['name'], labels=node['labels'])
-        node['properties']['name'] = decode_htmlentities(node['properties']['name'])
-        node['properties']['functional_cluster_id'] = node['properties'].get('functional_cluster_id', '')
-        node['properties']['description'] = decode_htmlentities(node['properties'].get('description', ''))
-        node['properties']['evidence_sentence'] = decode_htmlentities(node['properties'].get('evidence_sentence', ''))
+    g = nx.DiGraph()
+    for node in data['nodes']:
+        attrs = {k: v for k, v in node.items() if v not in (None, [])}
+        attrs['name'] = node['id']
+        attrs['label'] = node['display_label'] or node['id']
+        if node['node_type'] == 'reaction':
+            attrs['reaction_id'] = node['id']
+        attrs['description'] = decode_htmlentities(node.get('description') or '')
+        attrs['evidence_sentence'] = decode_htmlentities(node.get('evidence_sentence') or '')
+        g.add_node(node['id'], **attrs)
 
-        label = node['properties']['name']
-        label_parts = [x for x in re.split(r'(\[.+\])', label) if x.strip()]
-        if len(label_parts) == 1:
-            label = label_parts[0]
-        elif len(label_parts) == 2:
-            label = label_parts[0]
-        else:
-            print('Warning: strangely formatted label: ', label)
-        node['properties']['label'] = label
+    for edge in data['edges']:
+        g.add_edge(edge['source'], edge['target'], label=edge['edge_type'],
+                   **{k: edge.get(k) for k in EDGE_ATTRIBUTES})
 
-        g.add_node(node['id'], labels=node['labels'], **node['properties'])
+    return data['nodes'], data['edges'], g, backup
 
-    for edge in edges:
-        # if edge['start']['id'] not in g.nodes:
-        #     print('UNKNOWN START NODE: ', edge['start']['id'])
-        # if edge['end']['id'] not in g.nodes:
-        #     print('UNKNOWN END NODE: ', edge['end']['id'])
-        props = edge['properties'] if 'properties' in edge else {}
-        g.add_edge(edge['start']['id'], edge['end']['id'], label=edge['label'], **props)
 
-    return nodes, edges, g
+def edge_data(fr, to, attrs):
+    ''' An edge for the browser '''
+    return {**{k: attrs.get(k) for k in EDGE_ATTRIBUTES}, **edge_style(attrs), 'from': fr, 'to': to}
 
 
 def graph2json(nodelist, edgelist, g, query_nodes=None):
@@ -406,7 +394,7 @@ def graph2json(nodelist, edgelist, g, query_nodes=None):
 
     groups = set()
     for node in nodelist:
-        groups.add(fetch_group(node['labels']))
+        groups.add(node_group(node['node_type']))
     groups_json = {}
     for elt in groups:
         if elt in NODE_STYLE:
@@ -416,7 +404,7 @@ def graph2json(nodelist, edgelist, g, query_nodes=None):
 
     nlist = []
     for nodeid, attrs in g.nodes(data=True):
-        group = fetch_group(attrs['labels'])
+        group = node_group(attrs['node_type'])
 
         nodeData = {
             'id': nodeid,
@@ -440,7 +428,8 @@ def graph2json(nodelist, edgelist, g, query_nodes=None):
 
         for atr in [
             'synonyms',
-            'external_links'
+            'external_links',
+            'mapman'
             ]:
             nodeData[atr] = attrs.get(atr, [])
 
@@ -474,40 +463,9 @@ def graph2json(nodelist, edgelist, g, query_nodes=None):
 
         nlist.append(nodeData)
 
-    elist = []
-    for fr, to, attrs in g.edges(data=True):
-        edgeData = {}
-
-        for atr in [
-            'source_organ',
-            'target_organ',
-            'source_location',
-            'target_location',
-            'source_form',
-            'target_form',
-            'source_identifier',
-            'target_identifier',
-            'source_identifiers',
-            'target_identifiers'
-            ]:
-            edgeData[atr] = attrs.get(atr, None)
-
-        edgeData = {**edgeData, **edge_style(attrs)}
-        edgeData['from'] = fr
-        edgeData['to'] = to
-
-        elist.append(edgeData)
+    elist = [edge_data(fr, to, attrs) for fr, to, attrs in g.edges(data=True)]
 
     return {'network': {'nodes': nlist, 'edges': elist}, 'groups': groups_json}
-
-def fetch_group(labels):
-    index_labels = ['Family', 'Plant', 'Foreign', 'Node', 'FunctionalCluster', 'FunctionalClusterClass']
-    for x in labels:
-        if not (x in index_labels):
-            return x
-
-    # just in case
-    return labels[0]
 
 def get_autocomplete_node_data(g):
     data = []
@@ -517,11 +475,13 @@ def get_autocomplete_node_data(g):
             elt[atr] = attrs.get(atr, '')
         elt['synonyms'] = ', '.join(elt['synonyms'])
         elt['external_links'] = ', '.join(elt['external_links'])
+        # all its gene ids, to search by gene id
+        elt['genes'] = ' '.join(g for sp in SPECIES for g in (attrs.get(f'{sp}_homologues') or []))
 
         data.append(elt)
     return {'node_data': data}
 
 if __name__ == '__main__':
-    ns, es, g = parseJSON('data/PSS-reactions.json')
+    ns, es, g, _ = parseJSON(path='data/PSS-reactions.json')
     j = graph2json(ns, es, g)
     nd = get_autocomplete_node_data(g)

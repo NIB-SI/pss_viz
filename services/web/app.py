@@ -28,7 +28,8 @@ class PSS(object):
         self.load()
 
     def load(self, headers={}):
-        self._n, self._e, self._graph = utils.parseJSON(
+        # backup: the local copy (data/PSS-reactions.json), when PSS_URL can't be read
+        self._n, self._e, self._graph, self.backup = utils.parseJSON(
              url=PSS_URL,
              path=os.path.join(BASEDIR, 'data/PSS-reactions.json'),
              headers=headers)
@@ -87,27 +88,7 @@ def expand():
     subgraph, potentialEdges = utils.expand_nodes(pss._graph, list(query_nodes))
 
     # write potential edges in JSON
-    elist = []
-    for fr, to, attrs in potentialEdges:
-        edgeData = {}
-
-        for atr in [
-            'source_organ',
-            'target_organ',
-            'source_location',
-            'target_location',
-            'source_form',
-            'target_form',
-            'source_identifier',
-            'target_identifier'
-            ]:
-            edgeData[atr] = attrs.get(atr, None)
-
-        edgeData = {**edgeData, **utils.edge_style(attrs)}
-        edgeData['from'] = fr
-        edgeData['to'] = to
-
-        elist.append(edgeData)
+    elist = [utils.edge_data(fr, to, attrs) for fr, to, attrs in potentialEdges]
 
     json_data = utils.graph2json(pss._n, pss._e, subgraph)
     json_data['network']['potential_edges'] = elist
@@ -116,17 +97,17 @@ def expand():
 @bp.route('/')
 @cross_origin()
 def main():
-    if '_user_id' in session:
-        headers = headers={'Userid':session['_user_id']}
-        logged_in = True
-    else:
-        logged_in = False
-        headers = {}
+    logged_in = '_user_id' in session
+
+    # Forward the browser's own session cookie on this server-to-server call
+    # so skm-web can authenticate the request the normal way (current_user),
+    # instead of relaying a self-reported user id via a custom header.
+    headers = {'Cookie': request.headers.get('Cookie', '')}
 
     # refresh pss
     pss.load(headers=headers)
 
-    return render_template('index.html', logged_in=logged_in)
+    return render_template('index.html', logged_in=logged_in, backup=pss.backup, pss_url=PSS_URL)
 
 def create_app(test_config=None):
     # create and configure the app

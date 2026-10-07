@@ -5,6 +5,12 @@
 {% block page_title %}PSS Explorer{% endblock %}
 
 {% block description %}
+  {% if backup %}
+    <script>
+      console.warn("PSS Explorer: the PSS data could not be loaded from {{ pss_url }}; showing the local " +
+                   "backup file (data/PSS-reactions.json), which may be out of date and has the public reactions only.");
+    </script>
+  {% endif %}
 {% endblock %}
 
 {% block search_interface %}

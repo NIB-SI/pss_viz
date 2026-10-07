@@ -57,6 +57,42 @@ function addQueryParam(key, value) {
     history.pushState({}, '', url);
 }
 
+function escapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// MapMan bins (GoMapMan 2, MapMan4) of a functional cluster's Arabidopsis genes, "<code>_<full name>" (the
+// names of the bin and its parents joined with '.'): per bin its parents (small, muted), then the code and the
+// bin's own name (as plain text, e.g. in the hover tooltip: "<code> <name> (<parents>); ...")
+function mapmanHtml(bins) {
+    return (bins || []).map(function(bin) {
+        const i = bin.indexOf('_');
+        const code = bin.slice(0, i), names = bin.slice(i + 1).split('.');
+        const name = names.pop();
+        return '<div class="mapman-bin" title="{}">'.format(escapeHtml(bin)) +
+               '<div><span class="mapman-code">{}</span> {}</div>'.format(escapeHtml(code), escapeHtml(name)) +
+               (names.length ? '<div class="mapman-path"> ({})</div>'.format(names.map(escapeHtml).join(' › ')) : '') +
+               '<span class="visually-hidden">; </span></div>';
+    }).join('');
+}
+
+// the identifiers.org prefixes of PSS external links, and the databases without an identifiers.org namespace
+const IDENTIFIERS_ORG_PREFIXES = new Set(['doi', 'pubmed', 'pmc', 'chebi', 'pubchem.compound', 'kegg', 'biocyc',
+    'uniprot', 'go', 'ec-code', 'interpro', 'mirbase', 'eggnog', 'insdc', 'ena.embl', 'tair.name', 'taxonomy', 'skm']);
+const OTHER_LINK_URLS = {'aracyc': 'https://pmn.plantcyc.org/ARA/new-image?object={}'};
+
+// the URL of an external link (identifiers.org for CURIEs), or null (invented:, conceptual:, ...)
+function externalLinkUrl(source, identifier, link) {
+    const prefix = source.toLowerCase();
+    if (IDENTIFIERS_ORG_PREFIXES.has(prefix)) {
+        return 'https://identifiers.org/{}'.format(link);
+    }
+    if (prefix in OTHER_LINK_URLS) {
+        return OTHER_LINK_URLS[prefix].format(encodeURIComponent(identifier));
+    }
+    return null;
+}
+
 function parseExternalLink(s) {
     var i = s.indexOf(':');
     var source = s.slice(0, i);
@@ -135,7 +171,7 @@ $( document ).ready(function() {
         valueField: "id",
         labelField: "name",
         sortField: "name",
-        searchField: ['name', 'synonyms', 'description', 'evidence_sentence', 'functional_cluster_id', 'external_links'],
+        searchField: ['name', 'synonyms', 'genes', 'description', 'evidence_sentence', 'functional_cluster_id', 'external_links'],
         highlight: false,
         render: {
         //   item: function (item, escape) {
@@ -148,7 +184,12 @@ $( document ).ready(function() {
             let description = item.description.length>0 ? '<span class="caption"> <strong>description:</strong> {} </span>'.format(v.truncate(escape(item.description), maxlen - 'description:'.length)) : "";
             let synonyms = item.synonyms.length>0 ? '<span class="caption"> <strong>synonyms:</strong> {} </span>'.format(v.truncate(escape(item.synonyms), maxlen - 'synonyms:'.length)) : "";
             let evidence_sentence = item.evidence_sentence.length>0 ? '<span class="caption"> <strong>evidence:</strong> {} </span>'.format(v.truncate(escape(item.evidence_sentence), maxlen - 'evidence:'.length)) : "";
-            let external_links = item.external_links.length>0 ? '<span class="caption"> <strong>external links:</strong> {} </span>'.format(v.truncate(escape(item.external_links), maxlen - 'external links:'.length)) : "";
+            let links = item.external_links.split(', ').filter(x => x && !x.startsWith('other:')).join(', ');
+            let external_links = links.length>0 ? '<span class="caption"> <strong>external links:</strong> {} </span>'.format(v.truncate(escape(links), maxlen - 'external links:'.length)) : "";
+            // the cluster's gene ids that match the query (searching by gene id)
+            let query = (this.lastQuery || '').trim().toUpperCase();
+            let matching = query.length > 2 ? (item.genes || '').split(' ').filter(g => g.toUpperCase().includes(query)) : [];
+            let genes = matching.length>0 ? '<span class="caption"> <strong>gene:</strong> {} </span>'.format(escape(v.truncate(matching.join(', '), maxlen - 'gene:'.length))) : "";
             return '<div>\
             {}\
             {}\
@@ -156,7 +197,8 @@ $( document ).ready(function() {
             {}\
             {}\
             {}\
-            </div>'.format(name, functional_cluster_id, description, synonyms, evidence_sentence, external_links);
+            {}\
+            </div>'.format(name, genes, functional_cluster_id, description, synonyms, evidence_sentence, external_links);
           },
         }
     });
@@ -384,16 +426,13 @@ function postprocess_edge(item) {
     let footer = '</tbody>\
                   </table>';
 
-    let data = [['Source organ/tissue', item.source_organ],
-                ['Target organ/tissue', item.target_organ],
-                ['Source location/organelle', item.source_location],
-                ['Target location/organelle', item.target_location],
-                ['Source form', item.source_form],
-                ['Target form', item.target_form],
-                ['Identifier', item.target_identifier],
-                ['Identifier', item.source_identifier],
-                ['Identifiers', item.target_identifiers],
-                ['Identifiers', item.source_identifiers]
+    // the participant's (pss-export reaction graph edge fields)
+    let putative = (value, isPutative) => value == null ? null : value + (isPutative ? ' (putative)' : '');
+    let data = [['Role', item.role],
+                ['Form', item.form],
+                ['Location/organelle', putative(item.location, item.location_putative)],
+                ['Organ/tissue', putative(item.organ, item.organ_putative)],
+                ['Identifiers', item.identifiers && item.identifiers.length ? item.identifiers.join(', ') : null]
     ];
 
     let table = '';
@@ -402,7 +441,7 @@ function postprocess_edge(item) {
             let row = '<tr>\
                             <td><strong>{}</strong></td>\
                             <td class="text-wrap">{}</td>\
-                       </tr>'.format(item[0], item[1]);
+                       </tr>'.format(item[0], escapeHtml(String(item[1])));
             table += row;
         }
     });
@@ -435,62 +474,35 @@ function postprocess_node(item, groups) {
                 ['Evidence', v.truncate(item.evidence_sentence, maxlen)],
                 ['Mechanism', item.reaction_mechanism],
                 ['Effect', item.reaction_effect],
-                ['Pathway', item.pathway]
+                ['Pathway', item.pathway],
+                ['MapMan', mapmanHtml(item.mapman)]
     ]
 
-    external_links = []; // have you heard of identifiers.org??
+    // external links are identifiers.org CURIEs (#42): CHEBI:15653, pubmed:29934298, biocyc:META:CPD-728, ...
+    external_links = [];
     for (let x of item.external_links) {
         var [source, identifier] = parseExternalLink(x)
-        if (source=="doi") {
-            link = 'https://doi.org/{}'.format(identifier)
+        if (source == "other") {
+            continue;     // other:<free text> (e.g. other:db) is no link
         }
-        else if (source=="pmid") {
-            link = 'https://pubmed.ncbi.nlm.nih.gov/{}'.format(identifier)
-        }
-        else if (source=="ncbitaxion") {
-            link = 'https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id={}'.format(identifier)
-        }
-        else if (source=="chebi") {
-            link = 'https://www.ebi.ac.uk/chebi/beta/CHEBI:{}'.format(identifier)
-        }
-        else if (source=="pubchem") {
-            link = 'https://pubchem.ncbi.nlm.nih.gov/compound/{}'.format(identifier)
-        }
-        else if (source=="kegg") {
-            link = 'https://www.genome.jp/dbget-bin/www_bget?{}'.format(identifier)
-        }
-        else if (source=="go") {
-            link = 'https://amigo.geneontology.org/amigo/term/GO:{}'.format(identifier)
-        }
-        else if (source=="metacyc") {
-            link = 'https://metacyc.org/META/new-image?object={}'.format(identifier.toUpperCase())
-        }
-        else if (source=="aracyc") {
-            link = 'https://pmn.plantcyc.org/ARA/new-image?object={}'.format(identifier.toUpperCase())
-        }
-        else if (source=="ec") {
-            link = ' https://enzyme.expasy.org/EC/{}'.format(identifier)
-        }
-        // // TODO - gmm...
-        else {
-            link=null
-        }
-        external_links.push([x, link])
+        external_links.push([x, externalLinkUrl(source, identifier, x)])
     }
 
     has_homologues = false
     for (let sp in item._homologues) {
         // s = v.truncate(item._homologues[sp], maxlen)
+        // every gene links to its GoMapMan 2 gene page (Arabidopsis genes also to TAIR)
+        s = item._homologues[sp].split(", ").map(gene => gene.trim()).filter(gene => gene).map(function (gene) {
+            let html = '<a target="_blank" href="https://gomapman2.nib.si/gene-details/{}">{}</a>'.format(
+                encodeURIComponent(gene), escapeHtml(gene));
+            if (sp == "ath") {
+                html += ' <a target="_blank" class="gene-link-extra" href="https://www.arabidopsis.org/servlets/TairObject?name={}&type=locus">TAIR</a>'.format(
+                    encodeURIComponent(gene));
+            }
+            return html;
+        }).join(", ");
+
         if (sp=="ath") {
-            hrefs = []
-
-
-            // add link to TAIR per homologue in ath_homologues
-            item._homologues[sp].split(", ").forEach(function (item, index) {
-                // console.log(item)
-                hrefs.push('<a target="_blank" href="https://www.arabidopsis.org/servlets/TairObject?name={}&type=locus">{}</a>  '.format(item, item))
-            })
-            s = hrefs.join(", ")
 
             // add identifier to KnetMiner params list
             knetminer_params = jQuery.param({list:item._homologues[sp]})
@@ -502,7 +514,6 @@ function postprocess_node(item, groups) {
 
 
         } else {
-            s = item._homologues[sp];
             knetminer_params = [];
             ckn_params = [];
         }
