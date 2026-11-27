@@ -112,10 +112,13 @@ def main():
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
+    # web analytics: the Umami instance of skm.nib.si (no tag without a website id)
+    app.config['UMAMI_SCRIPT_URL'] = os.environ.get('UMAMI_SCRIPT_URL', 'https://skm.nib.si/analytics/script.js')
+    app.config['UMAMI_WEBSITE_ID'] = os.environ.get('UMAMI_WEBSITE_ID', '')
     CORS(app)
 
     rport = 6379
-    rs = redis.Redis(host='redis', port=rport)
+    rs = redis.Redis(host='redis', port=rport, password=os.environ.get('REDIS_PASSWORD') or None)
     try:
         rs.ping()
         print("Redis is running!")

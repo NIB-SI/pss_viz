@@ -38,6 +38,9 @@
     <script src="{{ url_for('bp.static', filename='main.js') }}"></script>
     <script src="{{ url_for('bp.static', filename='exports.js') }}"></script>
     <script src="{{ url_for('bp.static', filename='netviz_options.js') }}"></script>
+    {% if config.UMAMI_WEBSITE_ID %}
+    <script defer src="{{ config.UMAMI_SCRIPT_URL }}" data-website-id="{{ config.UMAMI_WEBSITE_ID }}"></script>
+    {% endif %}
     {% block head %}{% endblock %}
 
     <title>SKM -
